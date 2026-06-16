@@ -1,31 +1,31 @@
-package com.microservicio.cliente.service;
+package com.microservicio.cliente.service;//clase servicio... implementacion, del package service
 
-import com.microservicio.cliente.dto.ClienteRequestDTO;
-import com.microservicio.cliente.dto.ClienteResponseDTO;
-import com.microservicio.cliente.exception.ClienteNotFoundException;
-import com.microservicio.cliente.exception.ClienteYaExisteException;
-import com.microservicio.cliente.exception.EstadoInvalidoException;
-import com.microservicio.cliente.model.Cliente;
-import com.microservicio.cliente.model.Cliente.EstadoCliente;
-import com.microservicio.cliente.repository.ClienteRepository;
-import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import com.microservicio.cliente.dto.ClienteRequestDTO;//los que se solicitan en la api
+import com.microservicio.cliente.dto.ClienteResponseDTO;//los que se envian limados
+import com.microservicio.cliente.exception.ClienteNotFoundException;//excepcion especifica para cliente no encontrado
+import com.microservicio.cliente.exception.ClienteYaExisteException;//excepcion especifica para cliente ya existente
+import com.microservicio.cliente.exception.EstadoInvalidoException;//¿qué es estado inavlido?: 
+import com.microservicio.cliente.model.Cliente;//¿el modelado original?: no, no?
+import com.microservicio.cliente.model.Cliente.EstadoCliente;// ¿esto es una subclase?: enumeracion dentro de la clase
+import com.microservicio.cliente.repository.ClienteRepository;//repositorio porque con el nos comunicamos. 
+import lombok.RequiredArgsConstructor;//lombok
+import org.slf4j.Logger;//logger de slf4j es?:
+import org.slf4j.LoggerFactory;//factoria de logs por qué, por qué usa la palabra factory?: 
+import org.springframework.stereotype.Service;//estereotype ya dice mucho
+import org.springframework.transaction.annotation.Transactional;// transactional
 
-import java.util.List;
-import java.util.stream.Collectors;
+import java.util.List;// sintacticamente es un tipo?: sí
+import java.util.stream.Collectors;//collectors para hacer lista de entidades una lista de DTOs
 
 /**
  * Implementación de la lógica de negocio para clientes.
  * Contiene las reglas de dominio: unicidad de RUT/email, validación de estado, etc.
  */
-@Service
-@RequiredArgsConstructor
+@Service//marca esta clase coo un servicio, es decir, la capa de servicio, la capa intermedia entre el controlador y el repositorio
+@RequiredArgsConstructor//para atributos finales, siendo final para inyeccion. @RequiredArgsConstructor actua sobre los atributos finales. 
 public class ClienteServiceImpl implements ClienteService {
 
-    private static final Logger log = LoggerFactory.getLogger(ClienteServiceImpl.class);
+    private static final Logger log = LoggerFactory.getLogger(ClienteServiceImpl.class);//privado stattico final Logger log = metodo con parametros, paramtros que significan
 
     private final ClienteRepository clienteRepository;
 
@@ -35,36 +35,36 @@ public class ClienteServiceImpl implements ClienteService {
      * Registra un nuevo cliente.
      * Regla de negocio: el email y el RUT deben ser únicos en el sistema.
      */
-    @Override
-    @Transactional
-    public ClienteResponseDTO crearCliente(ClienteRequestDTO dto) {
-        log.info("Intentando crear cliente con email: {}", dto.getEmail());
+    @Override// porque viene de una interface,
+    @Transactional// cumple su objetivo a pesar de que no haya un uno es a muchos?: 
+    public ClienteResponseDTO crearCliente(ClienteRequestDTO dto) {//¿request porque solicita el cliente que se ocupen estos datos o request porque nosotros solicitamos esos datos al cliente?
+        log.info("Intentando crear cliente: {}", dto.getNombre());
 
         // Regla de negocio: email único
-        if (clienteRepository.existsByEmail(dto.getEmail())) {
-            log.warn("Intento de registro con email ya existente: {}", dto.getEmail());
-            throw new ClienteYaExisteException("Ya existe un cliente con el email: " + dto.getEmail());
+        if (clienteRepository.existsByEmail(dto.getEmail())) {//si es verdadero que existe un cliente con el email dado...
+            log.warn("Intento de registro con email ya existente: {}", dto.getEmail());//se anota un warn para alimentar los logs
+            throw new ClienteYaExisteException("Ya existe un cliente con el email: " + dto.getEmail());//tirar nuevo ClienteYaExisteExcepcion con argumento String
         }
 
         // Regla de negocio: RUT único
-        if (clienteRepository.existsByRut(dto.getRut())) {
-            log.warn("Intento de registro con RUT ya existente: {}", dto.getRut());
-            throw new ClienteYaExisteException("Ya existe un cliente con el RUT: " + dto.getRut());
+        if (clienteRepository.existsByRut(dto.getRut())) {//si coincide en la base de datos este rut?: 
+            log.warn("Intento de registro con RUT ya existente: {}", dto.getRut());//se logea el intento
+            throw new ClienteYaExisteException("Ya existe un cliente con el RUT: " + dto.getRut());//¿se corta la ejecucion de la funcion por la simple palabra throw?:
         }
 
-        Cliente cliente = mapearDtoAEntidad(dto);
-        Cliente guardado = clienteRepository.save(cliente);
+        Cliente cliente = mapearDtoAEntidad(dto);//tipo Cliente, varible cliente, igual a la funcion mapearDtoAEntidad con el argumento traido de la api
+        Cliente guardado = clienteRepository.save(cliente);//variable "guardado" es el "cliente" ya seteado con los atributos del modelado original pero sin el id. ¿qué devuelve un .save?: ¿envia "y" trae devuelta los datos del cliente?: 
 
-        log.info("Cliente creado exitosamente con ID: {}", guardado.getId());
-        return mapearEntidadADto(guardado);
+        log.info("Cliente creado exitosamente con ID: {}", guardado.getId());//se informa la creacion y de paso se espoilea el id 
+        return mapearEntidadADto(guardado);// en lo que se retorna un "ClienteRespondeDTO" se aprovecha de "a la variable 'guaradado'" filtrarla al molde "Response". o me equivoco?: 
     }
 
     // ─────────────────────────── LEER ────────────────────────────
 
-    @Override
-    @Transactional(readOnly = true)
+    @Override//tipico a estas alturas
+    @Transactional(readOnly = true)//se aclara el transactional ya que: para optimizar el rendimiento
     public ClienteResponseDTO obtenerClientePorId(Long id) {
-        log.debug("Buscando cliente con ID: {}", id);
+        log.debug("Buscando cliente con ID: {}", id);//es la comunicacion con la base de datos, "lee", "machea" si ese id existe. ¿o me equivoco?: 
         Cliente cliente = buscarClienteOLanzarExcepcion(id);
         return mapearEntidadADto(cliente);
     }
@@ -216,7 +216,7 @@ public class ClienteServiceImpl implements ClienteService {
                     log.warn("Cliente no encontrado con ID: {}", id);
                     return new ClienteNotFoundException("No se encontró cliente con ID: " + id);
                 });
-    }
+    }//relativamente sencillo de leer
 
     private Cliente mapearDtoAEntidad(ClienteRequestDTO dto) {
         return Cliente.builder()

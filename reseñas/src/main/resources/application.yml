@@ -1,0 +1,37 @@
+spring:
+  application:
+    name: ms-resena
+  datasource:
+    url: jdbc:mysql://localhost:3306/db_resenas?createDatabaseIfNotExist=true&serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+    database-platform: org.hibernate.dialect.MySQLDialect
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+server:
+  port: 8087
+
+api:
+  clientes:
+    url: http://localhost:8085
+  pagos:
+    url: http://localhost:8086
+  pedidos:
+    url: http://localhost:8084
+  productos:
+    url: http://localhost:8091
+
+logging:
+  level:
+    cl.jorge.resena: INFO

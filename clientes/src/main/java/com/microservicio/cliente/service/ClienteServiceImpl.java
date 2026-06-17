@@ -65,17 +65,17 @@ public class ClienteServiceImpl implements ClienteService {
     @Transactional(readOnly = true)//se aclara el transactional ya que: para optimizar el rendimiento
     public ClienteResponseDTO obtenerClientePorId(Long id) {
         log.debug("Buscando cliente con ID: {}", id);//es la comunicacion con la base de datos, "lee", "machea" si ese id existe. ¿o me equivoco?: 
-        Cliente cliente = buscarClienteOLanzarExcepcion(id);
+        Cliente cliente = buscarClienteOLanzarExcepcion(id);//tipo Cliente, para crear una variable de tipo Cliente llamada cliente,
         return mapearEntidadADto(cliente);
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true)//si "readOnly" es una "obligacion", ¿Qué es lo que hace por estar activado el "readOnly"?: 
     public ClienteResponseDTO obtenerClientePorEmail(String email) {
-        log.debug("Buscando cliente con email: {}", email);
-        Cliente cliente = clienteRepository.findByEmail(email)
+        log.debug("Se buscará cliente con email: {}", email);//se anota la accion que se va a realizar junto con el argumento usado para ell
+        Cliente clientePorEmail = clienteRepository.findByEmail(email)
                 .orElseThrow(() -> new ClienteNotFoundException("No se encontró cliente con email: " + email));
-        return mapearEntidadADto(cliente);
+        return mapearEntidadADto(clientePorEmail);
     }
 
     @Override
@@ -92,9 +92,9 @@ public class ClienteServiceImpl implements ClienteService {
     public List<ClienteResponseDTO> listarClientes() {
         log.debug("Listando todos los clientes");
         return clienteRepository.findAll()
-                .stream()
+                .stream()//.stream significa que convierte una lista a un flujo de datos. la traduccion de stream es:
                 .map(this::mapearEntidadADto)
-                .collect(Collectors.toList());
+                .collect(Collectors.toList());//".collect", una traduccion sería: 
     }
 
     @Override

@@ -65,8 +65,8 @@ public class ClienteServiceImpl implements ClienteService {
     @Transactional(readOnly = true)//se aclara el transactional ya que: para optimizar el rendimiento
     public ClienteResponseDTO obtenerClientePorId(Long id) {
         log.debug("Buscando cliente con ID: {}", id);//es la comunicacion con la base de datos, "lee", "machea" si ese id existe. ¿o me equivoco?: 
-        Cliente cliente = buscarClienteOLanzarExcepcion(id);
-        return mapearEntidadADto(cliente);
+        Cliente cliente = buscarClienteOLanzarExcepcion(id);//funcion creada más abajo
+        return mapearEntidadADto(cliente);//retorna otro return
     }
 
     @Override

@@ -1,0 +1,32 @@
+spring:
+  application:
+    name: api-gateway
+
+  # Configuración estática de rutas de respaldo para ejecución local nativa
+  cloud:
+    gateway:
+      routes:
+        - id: ms-categoria
+          uri: http://localhost:8090
+          predicates:
+            - Path=/api/v1/categorias/**
+
+# El Gateway centraliza la entrada externa en el puerto estándar de la pauta
+server:
+  port: 8080
+
+# Registro e interoperabilidad distribuidos
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+    register-with-eureka: true
+    fetch-registry: true
+  instance:
+    prefer-ip-address: true
+
+# Configuración perimetral de logs para control de enrutamiento
+logging:
+  level:
+    root: INFO
+    org.springframework.cloud.gateway: TRACE # Muestra en consola el camino exacto de cada petición

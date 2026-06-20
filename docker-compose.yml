@@ -1,0 +1,117 @@
+version: '3.8'
+
+services:
+  # ── BASE DE DATOS REQUISITO PIZARRA DEL PROFE ──────────────────────────────
+  mi-mysql:
+    image: mysql:8.0
+    container_name: mi-mysql
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      # Nota: En MySQL puedes crear bases de datos adicionales dinámicamente o mediante init scripts
+      MYSQL_DATABASE: db_categorias
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - ms-net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 768M
+
+  # ── MICROSERVICIO DE CATEGORÍAS (RECONSTRUIDO Y CERTIFICADO) ────────────────
+  ms-categoria:
+    build:
+      context: ./categoria
+      dockerfile: Dockerfile
+    container_name: ms-categoria
+    ports:
+      - "8090:8090"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mi-mysql:3306/db_categorias?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+      - EUREKA_CLIENT_ENABLED=false
+      - SPRING_CLOUD_DISCOVERY_ENABLED=false
+    networks:
+      - ms-net
+    depends_on:
+      mi-mysql:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 400M
+
+  # ── MICROSERVICIO DE DESPACHO (INTEGRADO AL ENTORNO) ───────────────────────
+  ms-despacho:
+    build:
+      context: ./despacho # Recuerda mover la carpeta "despacho" al lado de "categoria"
+      dockerfile: Dockerfile
+    container_name: ms-despacho
+    ports:
+      - "8089:8080" # Mapea el puerto 8080 interno de prod del Dockerfile al 8089 externo
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      # Apunta al contenedor global 'mi-mysql' e interactúa con su propia base de datos
+      - MYSQL_HOST=mi-mysql
+      - MYSQL_DATABASE=db_despachos
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=root
+      # URLs de Feign Clients mapeadas directo a la red interna bridge de Docker
+      - API_PEDIDOS_URL=http://ms-pedido:8084 # Cambiar por el nombre del contenedor de pedidos si aplica
+      - API_PROVEEDORES_URL=http://ms-proveedor:8082 # Cambiar por el nombre del contenedor de proveedores si aplica
+    networks:
+      - ms-net
+    depends_on:
+      mi-mysql:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 400M # Límite estricto de memoria para cuidar el rendimiento de tu MacBook Air
+
+  # ── API GATEWAY (PUERTA DE ENTRADA PÚBLICA DEL ENTORNO) ──────────────────────
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
+    container_name: api-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      - EUREKA_CLIENT_ENABLED=false
+      - SPRING_CLOUD_DISCOVERY_ENABLED=false
+
+      # VARIABLES DE ENRUTAMIENTO INDEXADAS (IE 3.3.2)
+      # Ruta 0: Categorías
+      - SPRING_CLOUD_GATEWAY_ROUTES_0_ID=ms-categoria
+      - SPRING_CLOUD_GATEWAY_ROUTES_0_URI=http://ms-categoria:8090
+      - SPRING_CLOUD_GATEWAY_ROUTES_0_PREDICATES_0=Path=/api/v1/categorias/**
+
+      # Ruta 1: Despachos (Habilitada en el Gateway del ecosistema distribuido)
+      - SPRING_CLOUD_GATEWAY_ROUTES_1_ID=ms-despacho
+      - SPRING_CLOUD_GATEWAY_ROUTES_1_URI=http://ms-despacho:8080
+      - SPRING_CLOUD_GATEWAY_ROUTES_1_PREDICATES_0=Path=/api/v1/despacho/**
+    networks:
+      - ms-net
+    depends_on:
+      - ms-categoria
+      - ms-despacho # Asegura que el Gateway inicie cuando despacho esté listo
+    deploy:
+      resources:
+        limits:
+          memory: 400M
+
+networks:
+  ms-net:
+    driver: bridge
+
+volumes:
+  mysql_data:

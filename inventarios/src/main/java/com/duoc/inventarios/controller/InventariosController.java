@@ -3,6 +3,12 @@ package com.duoc.inventarios.controller;
 import com.duoc.inventarios.dto.InventarioDTO;
 import com.duoc.inventarios.dto.InventariosRequest;
 import com.duoc.inventarios.service.InventariosService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,19 +22,28 @@ import java.util.List;
 @Slf4j
 @RestController
 @RequestMapping("/api/v1/inventarios")
-public class inventariosController {
+@Tag(name = "Inventarios", description = "API para la gestión de inventarios del sistema")
+public class InventariosController {
 
     @Autowired
     private InventariosService inventariosService;
 
-    // POST /api/v1/inventarios — crea un nuevo registro de inventario
+
+    @Operation(summary = "Registrar inventario", description = "Crea un nuevo registro de inventario")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Inventario creado exitosamente",
+                    content = @Content(schema = @Schema(implementation = InventarioDTO.class))),
+            @ApiResponse(responseCode = "400", description = "Datos inválidos en la petición"),
+    })
     @PostMapping
     public ResponseEntity<InventarioDTO> guardarInventario(@Valid @RequestBody InventariosRequest request) {
         log.info("El request para crear un inventario fue: " + request);
         return new ResponseEntity<>(inventariosService.crearInventario(request), HttpStatus.CREATED);
     }
 
-    // GET /api/v1/inventarios — lista todos los inventarios
+
+    @Operation(summary = "Listar inventarios", description = "Se listan todos los inventarios existentes")
+    @ApiResponse(responseCode = "200", description = "Lista ls inventarios")
     @GetMapping
     public ResponseEntity<List<InventarioDTO>> obtenerInventarios() {
         List<InventarioDTO> inventarios = inventariosService.obtenerInventarios();
@@ -38,13 +53,20 @@ public class inventariosController {
         return new ResponseEntity<>(inventarios, HttpStatus.OK);
     }
 
-    // GET /api/v1/inventarios/{id} — busca un inventario por ID
+
+    @Operation(summary = "Buscar inventario por ID")
+    @ApiResponses({@ApiResponse(responseCode = "200", description = "inventario encontrado"),
+                    @ApiResponse(responseCode = "404", description = "invantario no encontrado")})
     @GetMapping("/{id}")
     public ResponseEntity<InventarioDTO> buscarInventarioPorId(@PathVariable Integer id) {
         return new ResponseEntity<>(inventariosService.buscarInventarioPorId(id), HttpStatus.OK);
     }
 
     // PUT /api/v1/inventarios/{id} — actualiza un inventario existente
+    @Operation(summary = "Actualizar registro de un inventario")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Registro de inventario actualizado"),
+            @ApiResponse(responseCode = "404", description = "Inventario no encontrado")})
     @PutMapping("/{id}")
     public ResponseEntity<InventarioDTO> actualizarInventario(
             @PathVariable Integer id,
@@ -53,6 +75,9 @@ public class inventariosController {
     }
 
     // DELETE /api/v1/inventarios/{id} — elimina un inventario
+    @Operation(summary = "Eliminar inventario existente")
+    @ApiResponses({@ApiResponse(responseCode = "200", description = "Inventario elimando"),
+                    @ApiResponse(responseCode = "404", description = "Inventario no encontrado")})
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminarInventario(@PathVariable Integer id) {
         inventariosService.eliminarInventario(id);

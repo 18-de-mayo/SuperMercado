@@ -9,12 +9,14 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/v1/categorias")
 @RequiredArgsConstructor
@@ -30,6 +32,7 @@ public class CategoriaController {
     })
     @PostMapping
     public ResponseEntity<CategoriaDTO> crear(@Valid @RequestBody CategoriaRequest request) {
+        log.info("Petición entrante [POST] para crear categoría con datos: {}", request);
         return ResponseEntity.status(HttpStatus.CREATED).body(service.guardar(request));
     }
 
@@ -40,6 +43,7 @@ public class CategoriaController {
     })
     @GetMapping
     public ResponseEntity<List<CategoriaDTO>> listar() {
+        log.info("Petición entrante [GET] para listar la totalidad de las categorías.");
         List<CategoriaDTO> lista = service.listar();
         return lista.isEmpty()
                 ? ResponseEntity.noContent().build()
@@ -53,6 +57,7 @@ public class CategoriaController {
     })
     @GetMapping("/{id}")
     public ResponseEntity<CategoriaDTO> buscar(@PathVariable Long id) {
+        log.info("Petición entrante [GET] para localizar la categoría con ID: {}", id);
         return ResponseEntity.ok(service.buscarPorId(id));
     }
 
@@ -64,6 +69,7 @@ public class CategoriaController {
     })
     @PutMapping("/{id}")
     public ResponseEntity<CategoriaDTO> actualizar(@PathVariable Long id, @Valid @RequestBody CategoriaRequest request) {
+        log.info("Petición entrante [PUT] para modificar la categoría ID: {} con los datos: {}", id, request);
         return ResponseEntity.ok(service.actualizar(id, request));
     }
 
@@ -74,6 +80,7 @@ public class CategoriaController {
     })
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminar(@PathVariable Long id) {
+        log.warn("Petición entrante [DELETE] - Intento de remoción física para la categoría ID: {}", id);
         service.eliminar(id);
         return ResponseEntity.noContent().build();
     }

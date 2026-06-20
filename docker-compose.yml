@@ -1,18 +1,41 @@
 version: '3.8'
 
+networks:
+  ms-net:
+    driver: bridge
+
 services:
   # ── BASE DE DATOS REQUISITO PIZARRA DEL PROFE ──────────────────────────────
   mi-mysql:
     image: mysql:8.0
     container_name: mi-mysql
     ports:
-      - "3306:3306"
+      - "3307:3306"
     environment:
       MYSQL_ROOT_PASSWORD: root
       # Nota: En MySQL puedes crear bases de datos adicionales dinámicamente o mediante init scripts
       MYSQL_DATABASE: db_categorias
-    volumes:
-      - mysql_data:/var/lib/mysql
+    networks:
+      - ms-net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 768M
+
+  mi-mysql-despachos:
+    image: mysql:8.0
+    container_name: mi-mysql-despachos
+    ports:
+      - "3308:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      # Nota: En MySQL puedes crear bases de datos adicionales dinámicamente o mediante init scripts
+      MYSQL_DATABASE: db_despachos
     networks:
       - ms-net
     healthcheck:
@@ -56,11 +79,11 @@ services:
       dockerfile: Dockerfile
     container_name: ms-despacho
     ports:
-      - "8089:8080" # Mapea el puerto 8080 interno de prod del Dockerfile al 8089 externo
+      - "8089:8089" # Mapea el puerto 8080 interno de prod del Dockerfile al 8089 externo
     environment:
       - SPRING_PROFILES_ACTIVE=prod
       # Apunta al contenedor global 'mi-mysql' e interactúa con su propia base de datos
-      - MYSQL_HOST=mi-mysql
+      - MYSQL_HOST=mi-mysql-despachos
       - MYSQL_DATABASE=db_despachos
       - MYSQL_USER=root
       - MYSQL_PASSWORD=root
@@ -70,7 +93,7 @@ services:
     networks:
       - ms-net
     depends_on:
-      mi-mysql:
+      mi-mysql-despachos:
         condition: service_healthy
     deploy:
       resources:
@@ -109,9 +132,7 @@ services:
         limits:
           memory: 400M
 
-networks:
-  ms-net:
-    driver: bridge
+
 
 volumes:
   mysql_data:

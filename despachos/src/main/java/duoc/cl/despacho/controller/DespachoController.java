@@ -12,12 +12,15 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/v1/despacho")
 @RequiredArgsConstructor
@@ -46,8 +49,10 @@ public class DespachoController {
     })
     @GetMapping
     public ResponseEntity<List<DespachoDTO>> listar() {
+        log.info("cliente solicita listar");
         List<DespachoDTO> lista = service.listar();
         if (lista.isEmpty()) {
+                log.warn("comentario");
             return ResponseEntity.noContent().build();
         }
         return ResponseEntity.ok(lista);

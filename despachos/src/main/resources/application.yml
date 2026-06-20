@@ -1,0 +1,82 @@
+spring:
+  profiles:
+    active: dev
+  application:
+    name: ms-despacho
+
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/db_despachos?createDatabaseIfNotExist=true&serverTimezone=UTC&useSSL=false
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: true
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+server:
+  port: 8089
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: true
+
+# Coincide exactamente con tus @FeignClient(url = "${api.pedidos.url}")
+api:
+  pedidos:
+    url: http://localhost:8084
+  proveedores:
+    url: http://localhost:8082
+
+logging:
+  level:
+    duoc.cl.despacho: INFO
+
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+  datasource:
+    url: jdbc:mysql://${MYSQL_HOST:localhost}:3306/${MYSQL_DATABASE:db_despachos}
+    username: ${MYSQL_USER:root}
+    password: ${MYSQL_PASSWORD:root}
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+server:
+  port: 8080
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://${EUREKA_HOST:localhost}:8761/eureka/
+
+api:
+  pedidos:
+    url: http://${PEDIDOS_SERVICE_HOST:localhost}:8084
+  proveedores:
+    url: http://${PROVEEDORES_SERVICE_HOST:localhost}:8082

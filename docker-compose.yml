@@ -28,7 +28,7 @@ services:
   # ── MICROSERVICIO DE CATEGORÍAS (RECONSTRUIDO Y CERTIFICADO) ────────────────
   ms-categoria:
     build:
-      context: ./categoria
+      context: ./categorias
       dockerfile: Dockerfile
     container_name: ms-categoria
     ports:
@@ -52,7 +52,7 @@ services:
   # ── MICROSERVICIO DE DESPACHO (INTEGRADO AL ENTORNO) ───────────────────────
   ms-despacho:
     build:
-      context: ./despacho # Recuerda mover la carpeta "despacho" al lado de "categoria"
+      context: ./despachos # Recuerda mover la carpeta "despacho" al lado de "categoria"
       dockerfile: Dockerfile
     container_name: ms-despacho
     ports:
@@ -80,7 +80,7 @@ services:
   # ── API GATEWAY (PUERTA DE ENTRADA PÚBLICA DEL ENTORNO) ──────────────────────
   api-gateway:
     build:
-      context: ./api-gateway
+      context: ./gateway
       dockerfile: Dockerfile
     container_name: api-gateway
     ports:

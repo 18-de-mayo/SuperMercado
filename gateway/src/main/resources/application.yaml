@@ -1,21 +1,182 @@
 spring:
+  profiles:
+    active: dev
   application:
     name: api-gateway
 
-  # Configuración estática de rutas de respaldo para ejecución local nativa
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+
   cloud:
     gateway:
+      default-filters:
+        - name: CircuitBreaker
+          args:
+            name: default-cb
+            fallbackUri: forward:/fallback/default
+        - name: Retry
+          args:
+            retries: 2
+            statuses: GATEWAY_TIMEOUT, SERVICE_UNAVAILABLE
+            methods: GET
+
       routes:
         - id: ms-categoria
-          uri: http://localhost:8090
+          uri: lb://ms-categoria
           predicates:
             - Path=/api/v1/categorias/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: ms-categoria-cb
+                fallbackUri: forward:/fallback/categorias
+            - name: Retry
+              args:
+                retries: 3
+                statuses: GATEWAY_TIMEOUT, SERVICE_UNAVAILABLE
+                methods: GET
 
-# El Gateway centraliza la entrada externa en el puerto estándar de la pauta
+        - id: ms-producto
+          uri: lb://ms-producto
+          predicates:
+            - Path=/api/v1/productos/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: ms-producto-cb
+                fallbackUri: forward:/fallback/productos
+            - name: Retry
+              args:
+                retries: 3
+                statuses: GATEWAY_TIMEOUT, SERVICE_UNAVAILABLE
+                methods: GET
+
+        - id: ms-cliente
+          uri: lb://cliente-service
+          predicates:
+            - Path=/api/clientes/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: ms-cliente-cb
+                fallbackUri: forward:/fallback/clientes
+            - name: Retry
+              args:
+                retries: 3
+                statuses: GATEWAY_TIMEOUT, SERVICE_UNAVAILABLE
+                methods: GET
+
+        - id: ms-pedido
+          uri: lb://pedidos
+          predicates:
+            - Path=/api/v1/pedidos/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: ms-pedido-cb
+                fallbackUri: forward:/fallback/pedidos
+            - name: Retry
+              args:
+                retries: 3
+                statuses: GATEWAY_TIMEOUT, SERVICE_UNAVAILABLE
+                methods: GET
+
+        - id: ms-pago
+          uri: lb://pago-service
+          predicates:
+            - Path=/api/pagos/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: ms-pago-cb
+                fallbackUri: forward:/fallback/pagos
+            - name: Retry
+              args:
+                retries: 3
+                statuses: GATEWAY_TIMEOUT, SERVICE_UNAVAILABLE
+                methods: GET
+
+        - id: ms-inventario
+          uri: lb://ms-inventario
+          predicates:
+            - Path=/api/v1/inventarios/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: ms-inventario-cb
+                fallbackUri: forward:/fallback/inventarios
+            - name: Retry
+              args:
+                retries: 3
+                statuses: GATEWAY_TIMEOUT, SERVICE_UNAVAILABLE
+                methods: GET
+
+        - id: ms-proveedor
+          uri: lb://ms-proveedor
+          predicates:
+            - Path=/api/v1/proveedor/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: ms-proveedor-cb
+                fallbackUri: forward:/fallback/proveedores
+            - name: Retry
+              args:
+                retries: 3
+                statuses: GATEWAY_TIMEOUT, SERVICE_UNAVAILABLE
+                methods: GET
+
+        - id: ms-catalogo
+          uri: lb://ms-catalogo
+          predicates:
+            - Path=/api/v1/catalogos/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: ms-catalogo-cb
+                fallbackUri: forward:/fallback/catalogos
+            - name: Retry
+              args:
+                retries: 3
+                statuses: GATEWAY_TIMEOUT, SERVICE_UNAVAILABLE
+                methods: GET
+
+        - id: ms-resena
+          uri: lb://ms-resena
+          predicates:
+            - Path=/api/v1/resenas/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: ms-resena-cb
+                fallbackUri: forward:/fallback/resenas
+            - name: Retry
+              args:
+                retries: 3
+                statuses: GATEWAY_TIMEOUT, SERVICE_UNAVAILABLE
+                methods: GET
+
+        - id: ms-despacho
+          uri: lb://ms-despacho
+          predicates:
+            - Path=/api/v1/despacho/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: ms-despacho-cb
+                fallbackUri: forward:/fallback/despachos
+            - name: Retry
+              args:
+                retries: 3
+                statuses: GATEWAY_TIMEOUT, SERVICE_UNAVAILABLE
+                methods: GET
+
 server:
   port: 8080
 
-# Registro e interoperabilidad distribuidos
 eureka:
   client:
     service-url:
@@ -25,8 +186,254 @@ eureka:
   instance:
     prefer-ip-address: true
 
-# Configuración perimetral de logs para control de enrutamiento
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 30s
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true
+    instances:
+      ms-categoria-cb:
+        base-config: default
+      ms-producto-cb:
+        base-config: default
+      ms-cliente-cb:
+        base-config: default
+      ms-pedido-cb:
+        base-config: default
+      ms-pago-cb:
+        base-config: default
+      ms-inventario-cb:
+        base-config: default
+      ms-proveedor-cb:
+        base-config: default
+      ms-catalogo-cb:
+        base-config: default
+      ms-resena-cb:
+        base-config: default
+      ms-despacho-cb:
+        base-config: default
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,circuitbreakers
+  endpoint:
+    health:
+      show-details: always
+
 logging:
   level:
     root: INFO
-    org.springframework.cloud.gateway: TRACE # Muestra en consola el camino exacto de cada petición
+    org.springframework.cloud.gateway: TRACE
+
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+  cloud:
+    gateway:
+      default-filters:
+        - name: CircuitBreaker
+          args:
+            name: default-cb
+            fallbackUri: forward:/fallback/default
+        - name: Retry
+          args:
+            retries: 2
+            statuses: GATEWAY_TIMEOUT, SERVICE_UNAVAILABLE
+            methods: GET
+
+      routes:
+        - id: ms-categoria
+          uri: lb://ms-categoria
+          predicates:
+            - Path=/api/v1/categorias/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: ms-categoria-cb
+                fallbackUri: forward:/fallback/categorias
+            - name: Retry
+              args:
+                retries: 3
+                statuses: GATEWAY_TIMEOUT, SERVICE_UNAVAILABLE
+                methods: GET
+
+        - id: ms-producto
+          uri: lb://ms-producto
+          predicates:
+            - Path=/api/v1/productos/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: ms-producto-cb
+                fallbackUri: forward:/fallback/productos
+            - name: Retry
+              args:
+                retries: 3
+                statuses: GATEWAY_TIMEOUT, SERVICE_UNAVAILABLE
+                methods: GET
+
+        - id: ms-cliente
+          uri: lb://cliente-service
+          predicates:
+            - Path=/api/clientes/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: ms-cliente-cb
+                fallbackUri: forward:/fallback/clientes
+            - name: Retry
+              args:
+                retries: 3
+                statuses: GATEWAY_TIMEOUT, SERVICE_UNAVAILABLE
+                methods: GET
+
+        - id: ms-pedido
+          uri: lb://pedidos
+          predicates:
+            - Path=/api/v1/pedidos/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: ms-pedido-cb
+                fallbackUri: forward:/fallback/pedidos
+            - name: Retry
+              args:
+                retries: 3
+                statuses: GATEWAY_TIMEOUT, SERVICE_UNAVAILABLE
+                methods: GET
+
+        - id: ms-pago
+          uri: lb://pago-service
+          predicates:
+            - Path=/api/pagos/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: ms-pago-cb
+                fallbackUri: forward:/fallback/pagos
+            - name: Retry
+              args:
+                retries: 3
+                statuses: GATEWAY_TIMEOUT, SERVICE_UNAVAILABLE
+                methods: GET
+
+        - id: ms-inventario
+          uri: lb://ms-inventario
+          predicates:
+            - Path=/api/v1/inventarios/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: ms-inventario-cb
+                fallbackUri: forward:/fallback/inventarios
+            - name: Retry
+              args:
+                retries: 3
+                statuses: GATEWAY_TIMEOUT, SERVICE_UNAVAILABLE
+                methods: GET
+
+        - id: ms-proveedor
+          uri: lb://ms-proveedor
+          predicates:
+            - Path=/api/v1/proveedor/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: ms-proveedor-cb
+                fallbackUri: forward:/fallback/proveedores
+            - name: Retry
+              args:
+                retries: 3
+                statuses: GATEWAY_TIMEOUT, SERVICE_UNAVAILABLE
+                methods: GET
+
+        - id: ms-catalogo
+          uri: lb://ms-catalogo
+          predicates:
+            - Path=/api/v1/catalogos/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: ms-catalogo-cb
+                fallbackUri: forward:/fallback/catalogos
+            - name: Retry
+              args:
+                retries: 3
+                statuses: GATEWAY_TIMEOUT, SERVICE_UNAVAILABLE
+                methods: GET
+
+        - id: ms-resena
+          uri: lb://ms-resena
+          predicates:
+            - Path=/api/v1/resenas/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: ms-resena-cb
+                fallbackUri: forward:/fallback/resenas
+            - name: Retry
+              args:
+                retries: 3
+                statuses: GATEWAY_TIMEOUT, SERVICE_UNAVAILABLE
+                methods: GET
+
+        - id: ms-despacho
+          uri: lb://ms-despacho
+          predicates:
+            - Path=/api/v1/despacho/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: ms-despacho-cb
+                fallbackUri: forward:/fallback/despachos
+            - name: Retry
+              args:
+                retries: 3
+                statuses: GATEWAY_TIMEOUT, SERVICE_UNAVAILABLE
+                methods: GET
+
+server:
+  port: ${PORT:8080}
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://${EUREKA_HOST:localhost}:8761/eureka/
+    register-with-eureka: true
+    fetch-registry: true
+  instance:
+    prefer-ip-address: true
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 30s
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,circuitbreakers
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    root: WARN

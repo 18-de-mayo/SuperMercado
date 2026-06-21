@@ -5,7 +5,22 @@ networks:
     driver: bridge
 
 services:
-  # ── BASE DE DATOS REQUISITO PIZARRA DEL PROFE ──────────────────────────────
+  # ── EUREKA (Service Discovery) ──────────────────────────────
+  eureka-server:
+    build:
+      context: ./eureka/eureka
+      dockerfile: Dockerfile
+    container_name: eureka-server
+    ports:
+      - "8761:8761"
+    networks:
+      - ms-net
+    deploy:
+      resources:
+        limits:
+          memory: 400M
+
+  # ── BASE DE DATOS ────────────────────────────────────────────
   mi-mysql:
     image: mysql:8.0
     container_name: mi-mysql
@@ -13,7 +28,6 @@ services:
       - "3307:3306"
     environment:
       MYSQL_ROOT_PASSWORD: root
-      # Nota: En MySQL puedes crear bases de datos adicionales dinámicamente o mediante init scripts
       MYSQL_DATABASE: db_categorias
     networks:
       - ms-net
@@ -27,15 +41,13 @@ services:
         limits:
           memory: 768M
 
-  mi-mysql-despachos:
+  mi-mysql-servicios:
     image: mysql:8.0
-    container_name: mi-mysql-despachos
+    container_name: mi-mysql-servicios
     ports:
-      - "3308:3306"
+      - "3309:3306"
     environment:
       MYSQL_ROOT_PASSWORD: root
-      # Nota: En MySQL puedes crear bases de datos adicionales dinámicamente o mediante init scripts
-      MYSQL_DATABASE: db_despachos
     networks:
       - ms-net
     healthcheck:
@@ -48,7 +60,7 @@ services:
         limits:
           memory: 768M
 
-  # ── MICROSERVICIO DE CATEGORÍAS (RECONSTRUIDO Y CERTIFICADO) ────────────────
+  # ── MICROSERVICIOS ──────────────────────────────────────────
   ms-categoria:
     build:
       context: ./categorias
@@ -57,50 +69,265 @@ services:
     ports:
       - "8090:8090"
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mysql://mi-mysql:3306/db_categorias?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-      - SPRING_DATASOURCE_USERNAME=root
-      - SPRING_DATASOURCE_PASSWORD=root
-      - EUREKA_CLIENT_ENABLED=false
-      - SPRING_CLOUD_DISCOVERY_ENABLED=false
+      - SPRING_PROFILES_ACTIVE=prod
+      - DB_URL=jdbc:mysql://mi-mysql:3306/db_categorias?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      - DB_USER=root
+      - DB_PASS=root
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
     networks:
       - ms-net
     depends_on:
       mi-mysql:
         condition: service_healthy
+      eureka-server:
+        condition: service_started
     deploy:
       resources:
         limits:
           memory: 400M
 
-  # ── MICROSERVICIO DE DESPACHO (INTEGRADO AL ENTORNO) ───────────────────────
-  ms-despacho:
+  ms-producto:
     build:
-      context: ./despachos # Recuerda mover la carpeta "despacho" al lado de "categoria"
+      context: ./productos
       dockerfile: Dockerfile
-    container_name: ms-despacho
+    container_name: ms-producto
     ports:
-      - "8089:8089" # Mapea el puerto 8080 interno de prod del Dockerfile al 8089 externo
+      - "8081:8081"
     environment:
       - SPRING_PROFILES_ACTIVE=prod
-      # Apunta al contenedor global 'mi-mysql' e interactúa con su propia base de datos
-      - MYSQL_HOST=mi-mysql-despachos
-      - MYSQL_DATABASE=db_despachos
-      - MYSQL_USER=root
-      - MYSQL_PASSWORD=root
-      # URLs de Feign Clients mapeadas directo a la red interna bridge de Docker
-      - API_PEDIDOS_URL=http://ms-pedido:8084 # Cambiar por el nombre del contenedor de pedidos si aplica
-      - API_PROVEEDORES_URL=http://ms-proveedor:8082 # Cambiar por el nombre del contenedor de proveedores si aplica
+      - DB_URL=jdbc:mysql://mi-mysql-servicios:3306/db_productos?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      - DB_USER=root
+      - DB_PASS=root
+      - API_PROVEEDORES_URL=http://ms-proveedor:8082
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
     networks:
       - ms-net
     depends_on:
-      mi-mysql-despachos:
+      mi-mysql-servicios:
         condition: service_healthy
+      eureka-server:
+        condition: service_started
     deploy:
       resources:
         limits:
-          memory: 400M # Límite estricto de memoria para cuidar el rendimiento de tu MacBook Air
+          memory: 400M
 
-  # ── API GATEWAY (PUERTA DE ENTRADA PÚBLICA DEL ENTORNO) ──────────────────────
+  ms-cliente:
+    build:
+      context: ./clientes
+      dockerfile: Dockerfile
+    container_name: ms-cliente
+    ports:
+      - "8086:8086"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - DATABASE_URL=jdbc:mysql://mi-mysql-servicios:3306/cliente_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+      - DATABASE_USERNAME=root
+      - DATABASE_PASSWORD=root
+      - MICROSERVICIOS_PEDIDOS_URL=http://ms-pedido:8084
+      - MICROSERVICIOS_DESPACHO_URL=http://ms-despacho:8089
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+    networks:
+      - ms-net
+    depends_on:
+      mi-mysql-servicios:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+    deploy:
+      resources:
+        limits:
+          memory: 400M
+
+  ms-pedido:
+    build:
+      context: ./pedidos
+      dockerfile: Dockerfile
+    container_name: ms-pedido
+    ports:
+      - "8084:8084"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - DB_URL=jdbc:mysql://mi-mysql-servicios:3306/pedidos?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      - DB_USER=root
+      - DB_PASS=root
+      - API_PRODUCTOS_URL=http://ms-producto:8081/api/v1/
+      - API_CLIENTES_URL=http://ms-cliente:8086/api
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+    networks:
+      - ms-net
+    depends_on:
+      mi-mysql-servicios:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+    deploy:
+      resources:
+        limits:
+          memory: 400M
+
+  ms-pago:
+    build:
+      context: ./pagos
+      dockerfile: Dockerfile
+    container_name: ms-pago
+    ports:
+      - "8085:8085"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - DATABASE_URL=jdbc:mysql://mi-mysql-servicios:3306/pago_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+      - DATABASE_USERNAME=root
+      - DATABASE_PASSWORD=root
+      - PEDIDOS_SERVICE_URL=http://ms-pedido:8084
+      - CLIENTES_SERVICE_URL=http://ms-cliente:8086
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+    networks:
+      - ms-net
+    depends_on:
+      mi-mysql-servicios:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+    deploy:
+      resources:
+        limits:
+          memory: 400M
+
+  ms-inventario:
+    build:
+      context: ./inventarios
+      dockerfile: Dockerfile
+    container_name: ms-inventario
+    ports:
+      - "8088:8088"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - DB_URL=jdbc:mysql://mi-mysql-servicios:3306/db_inventarios?createDatabaseIfNotExist=true&serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true
+      - DB_USER=root
+      - DB_PASS=root
+      - API_PRODUCTOS_URL=http://ms-producto:8081
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+    networks:
+      - ms-net
+    depends_on:
+      mi-mysql-servicios:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+    deploy:
+      resources:
+        limits:
+          memory: 400M
+
+  ms-proveedor:
+    build:
+      context: ./proveedores
+      dockerfile: Dockerfile
+    container_name: ms-proveedor
+    ports:
+      - "8082:8082"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - DB_URL=jdbc:mysql://mi-mysql-servicios:3306/proveedor?createDatabaseIfNotExist=true&serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true
+      - DB_USER=root
+      - DB_PASS=root
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+    networks:
+      - ms-net
+    depends_on:
+      mi-mysql-servicios:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+    deploy:
+      resources:
+        limits:
+          memory: 400M
+
+  ms-catalogo:
+    build:
+      context: ./catalogo
+      dockerfile: Dockerfile
+    container_name: ms-catalogo
+    ports:
+      - "8083:8083"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - DB_URL=jdbc:mysql://mi-mysql-servicios:3306/catalogo?createDatabaseIfNotExist=true&serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true
+      - DB_USER=root
+      - DB_PASS=root
+      - API_PRODUCTOS_URL=http://ms-producto:8081
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+    networks:
+      - ms-net
+    depends_on:
+      mi-mysql-servicios:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+    deploy:
+      resources:
+        limits:
+          memory: 400M
+
+  ms-resena:
+    build:
+      context: ./reseñas
+      dockerfile: Dockerfile
+    container_name: ms-resena
+    ports:
+      - "8087:8087"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - DB_URL=jdbc:mysql://mi-mysql-servicios:3306/db_resenas?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      - DB_USER=root
+      - DB_PASS=root
+      - API_CLIENTES_URL=http://ms-cliente:8086
+      - API_PAGOS_URL=http://ms-pago:8085
+      - API_PEDIDOS_URL=http://ms-pedido:8084
+      - API_PRODUCTOS_URL=http://ms-producto:8081
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+    networks:
+      - ms-net
+    depends_on:
+      mi-mysql-servicios:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+    deploy:
+      resources:
+        limits:
+          memory: 400M
+
+  ms-despacho:
+    build:
+      context: ./despachos
+      dockerfile: Dockerfile
+    container_name: ms-despacho
+    ports:
+      - "8089:8089"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - MYSQL_HOST=mi-mysql-servicios
+      - MYSQL_DATABASE=db_despachos
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=root
+      - API_PEDIDOS_URL=http://ms-pedido:8084
+      - API_PROVEEDORES_URL=http://ms-proveedor:8082
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+    networks:
+      - ms-net
+    depends_on:
+      mi-mysql-servicios:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+    deploy:
+      resources:
+        limits:
+          memory: 400M
+
+  # ── API GATEWAY ────────────────────────────────────────────
   api-gateway:
     build:
       context: ./gateway
@@ -109,30 +336,26 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - EUREKA_CLIENT_ENABLED=false
-      - SPRING_CLOUD_DISCOVERY_ENABLED=false
-
-      # VARIABLES DE ENRUTAMIENTO INDEXADAS (IE 3.3.2)
-      # Ruta 0: Categorías
-      - SPRING_CLOUD_GATEWAY_ROUTES_0_ID=ms-categoria
-      - SPRING_CLOUD_GATEWAY_ROUTES_0_URI=http://ms-categoria:8090
-      - SPRING_CLOUD_GATEWAY_ROUTES_0_PREDICATES_0=Path=/api/v1/categorias/**
-
-      # Ruta 1: Despachos (Habilitada en el Gateway del ecosistema distribuido)
-      - SPRING_CLOUD_GATEWAY_ROUTES_1_ID=ms-despacho
-      - SPRING_CLOUD_GATEWAY_ROUTES_1_URI=http://ms-despacho:8080
-      - SPRING_CLOUD_GATEWAY_ROUTES_1_PREDICATES_0=Path=/api/v1/despacho/**
+      - SPRING_PROFILES_ACTIVE=prod
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
     networks:
       - ms-net
     depends_on:
+      - eureka-server
       - ms-categoria
-      - ms-despacho # Asegura que el Gateway inicie cuando despacho esté listo
+      - ms-producto
+      - ms-cliente
+      - ms-pedido
+      - ms-pago
+      - ms-inventario
+      - ms-proveedor
+      - ms-catalogo
+      - ms-resena
+      - ms-despacho
     deploy:
       resources:
         limits:
           memory: 400M
-
-
 
 volumes:
   mysql_data:

@@ -5,7 +5,7 @@ networks:
     driver: bridge
 
 services:
-  # ── BASE DE DATOS REQUISITO PIZARRA DEL PROFE ──────────────────────────────
+  # ── BASE DE DATOS: CATEGORÍAS ──────────────────────────────────────────────
   mi-mysql:
     image: mysql:8.0
     container_name: mi-mysql
@@ -13,8 +13,9 @@ services:
       - "3307:3306"
     environment:
       MYSQL_ROOT_PASSWORD: root
-      # Nota: En MySQL puedes crear bases de datos adicionales dinámicamente o mediante init scripts
       MYSQL_DATABASE: db_categorias
+    volumes:
+      - mysql_categoria_data:/var/lib/mysql # Persistencia para categorías
     networks:
       - ms-net
     healthcheck:
@@ -27,6 +28,7 @@ services:
         limits:
           memory: 768M
 
+  # ── BASE DE DATOS: DESPACHOS ───────────────────────────────────────────────
   mi-mysql-despachos:
     image: mysql:8.0
     container_name: mi-mysql-despachos
@@ -34,8 +36,9 @@ services:
       - "3308:3306"
     environment:
       MYSQL_ROOT_PASSWORD: root
-      # Nota: En MySQL puedes crear bases de datos adicionales dinámicamente o mediante init scripts
       MYSQL_DATABASE: db_despachos
+    volumes:
+      - mysql_despacho_data:/var/lib/mysql # Persistencia para despachos
     networks:
       - ms-net
     healthcheck:
@@ -48,7 +51,7 @@ services:
         limits:
           memory: 768M
 
-  # ── MICROSERVICIO DE CATEGORÍAS (RECONSTRUIDO Y CERTIFICADO) ────────────────
+  # ── MICROSERVICIO DE CATEGORÍAS ───────────────────────────────────────────
   ms-categoria:
     build:
       context: ./categorias
@@ -72,24 +75,23 @@ services:
         limits:
           memory: 400M
 
-  # ── MICROSERVICIO DE DESPACHO (INTEGRADO AL ENTORNO) ───────────────────────
+  # ── MICROSERVICIO DE DESPACHO ──────────────────────────────────────────────
   ms-despacho:
     build:
-      context: ./despachos # Recuerda mover la carpeta "despacho" al lado de "categoria"
+      context: ./despachos
       dockerfile: Dockerfile
     container_name: ms-despacho
     ports:
-      - "8089:8089" # Mapea el puerto 8080 interno de prod del Dockerfile al 8089 externo
+      - "8089:8089"
     environment:
       - SPRING_PROFILES_ACTIVE=prod
-      # Apunta al contenedor global 'mi-mysql' e interactúa con su propia base de datos
       - MYSQL_HOST=mi-mysql-despachos
       - MYSQL_DATABASE=db_despachos
       - MYSQL_USER=root
       - MYSQL_PASSWORD=root
-      # URLs de Feign Clients mapeadas directo a la red interna bridge de Docker
-      - API_PEDIDOS_URL=http://ms-pedido:8084 # Cambiar por el nombre del contenedor de pedidos si aplica
-      - API_PROVEEDORES_URL=http://ms-proveedor:8082 # Cambiar por el nombre del contenedor de proveedores si aplica
+      # Interconexión entre contenedores usando los alias de la red bridge de Docker
+      - API_PEDIDOS_URL=http://ms-pedido:8084
+      - API_PROVEEDORES_URL=http://ms-proveedor:8082
     networks:
       - ms-net
     depends_on:
@@ -98,9 +100,9 @@ services:
     deploy:
       resources:
         limits:
-          memory: 400M # Límite estricto de memoria para cuidar el rendimiento de tu MacBook Air
+          memory: 400M
 
-  # ── API GATEWAY (PUERTA DE ENTRADA PÚBLICA DEL ENTORNO) ──────────────────────
+  # ── API GATEWAY (PÚBLICO) ──────────────────────────────────────────────────
   api-gateway:
     build:
       context: ./gateway
@@ -112,27 +114,27 @@ services:
       - EUREKA_CLIENT_ENABLED=false
       - SPRING_CLOUD_DISCOVERY_ENABLED=false
 
-      # VARIABLES DE ENRUTAMIENTO INDEXADAS (IE 3.3.2)
+      # VARIABLES DE ENRUTAMIENTO INDEXADAS
       # Ruta 0: Categorías
       - SPRING_CLOUD_GATEWAY_ROUTES_0_ID=ms-categoria
       - SPRING_CLOUD_GATEWAY_ROUTES_0_URI=http://ms-categoria:8090
       - SPRING_CLOUD_GATEWAY_ROUTES_0_PREDICATES_0=Path=/api/v1/categorias/**
 
-      # Ruta 1: Despachos (Habilitada en el Gateway del ecosistema distribuido)
+      # Ruta 1: Despachos
       - SPRING_CLOUD_GATEWAY_ROUTES_1_ID=ms-despacho
-      - SPRING_CLOUD_GATEWAY_ROUTES_1_URI=http://ms-despacho:8080
-      - SPRING_CLOUD_GATEWAY_ROUTES_1_PREDICATES_0=Path=/api/v1/despacho/**
+      - SPRING_CLOUD_GATEWAY_ROUTES_1_URI=http://ms-despacho:8089
+      - SPRING_CLOUD_GATEWAY_ROUTES_1_PREDICATES_0=Path=/api/v1/despachos/**
     networks:
       - ms-net
     depends_on:
       - ms-categoria
-      - ms-despacho # Asegura que el Gateway inicie cuando despacho esté listo
+      - ms-despacho
     deploy:
       resources:
         limits:
           memory: 400M
 
-
-
+# Definición de volúmenes independientes para asegurar la persistencia de datos
 volumes:
-  mysql_data:
+  mysql_categoria_data:
+  mysql_despacho_data:

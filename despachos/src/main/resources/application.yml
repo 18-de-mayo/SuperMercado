@@ -5,6 +5,9 @@ spring:
     name: ms-despacho
 
 ---
+# ─────────────────────────────────────────────────────────────────
+# PERFIL DE DESARROLLO LOCAL (DEV)
+# ─────────────────────────────────────────────────────────────────
 spring:
   config:
     activate:
@@ -36,7 +39,6 @@ eureka:
   instance:
     prefer-ip-address: true
 
-# Coincide exactamente con tus @FeignClient(url = "${api.pedidos.url}")
 api:
   pedidos:
     url: http://localhost:8084
@@ -48,13 +50,16 @@ logging:
     duoc.cl.despacho: INFO
 
 ---
+# ─────────────────────────────────────────────────────────────────
+# PERFIL DE PRODUCCIÓN / DOCKER (PROD)
+# ─────────────────────────────────────────────────────────────────
 spring:
   config:
     activate:
       on-profile: prod
 
   datasource:
-    url: jdbc:mysql://${MYSQL_HOST:localhost}:3306/${MYSQL_DATABASE:db_despachos}
+    url: jdbc:mysql://${MYSQL_HOST:localhost}:3306/${MYSQL_DATABASE:db_despachos}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
     username: ${MYSQL_USER:root}
     password: ${MYSQL_PASSWORD:root}
 
@@ -75,8 +80,9 @@ eureka:
     service-url:
       defaultZone: http://${EUREKA_HOST:localhost}:8761/eureka/
 
+# CORRECCIÓN CRÍTICA: Mapeo directo a las variables inyectadas en tu Docker Compose
 api:
   pedidos:
-    url: http://${PEDIDOS_SERVICE_HOST:localhost}:8084
+    url: ${API_PEDIDOS_URL:http://localhost:8084}
   proveedores:
-    url: http://${PROVEEDORES_SERVICE_HOST:localhost}:8082
+    url: ${API_PROVEEDORES_URL:http://localhost:8082}

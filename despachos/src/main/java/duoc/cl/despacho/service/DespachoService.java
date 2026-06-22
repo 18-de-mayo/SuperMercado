@@ -9,8 +9,7 @@ import duoc.cl.despacho.feign.ProveedorFeignClient;
 import duoc.cl.despacho.model.Despacho;
 import duoc.cl.despacho.repository.DespachoRepository;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -18,12 +17,10 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class DespachoService {
-
-    // Instanciación del Logger para trazabilidad operacional (IE 3.3.6)
-    private static final Logger log = LoggerFactory.getLogger(DespachoService.class);
 
     private final DespachoRepository repository;
     private final PedidoFeignClient pedidoFeignClient;
@@ -59,9 +56,12 @@ public class DespachoService {
         despacho.setProveedorId(request.getProveedorId());
         despacho.setDireccionDestino(request.getDireccionDestino());
         despacho.setComuna(request.getComuna());
+        despacho.setEstado("PENDIENTE"); // Fuerza el estado inicial por defecto
 
         Despacho despachoGuardado = repository.save(despacho);
-        log.info("Despacho creado exitosamente en Base de Datos con ID generado: {}", despachoGuardado.getId());
+
+        // 3. ADAPTACIÓN DEL PROFE: Traza e impresión de texto exacta en la capa Service
+        log.info("Despacho almacenado correctamente: " + despachoGuardado);
 
         return mapToDTO(despachoGuardado);
     }

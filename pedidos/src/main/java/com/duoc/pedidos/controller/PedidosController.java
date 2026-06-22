@@ -3,7 +3,7 @@ package com.duoc.pedidos.controller;
 
 import com.duoc.pedidos.dto.PedidoDTO;
 import com.duoc.pedidos.dto.PedidosRequest;
-import com.duoc.pedidos.repository.PedidosRepository;
+
 import com.duoc.pedidos.service.PedidosService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;

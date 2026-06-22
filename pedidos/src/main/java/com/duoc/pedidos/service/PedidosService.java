@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -38,9 +39,8 @@ public class PedidosService {
                 DetallePedidos detalle = new DetallePedidos();
                 detalle.setIdProducto(detReq.getIdProducto());
                 detalle.setCantidad(detReq.getCantidad());
+                detalle.setPrecioUnitario(detReq.getPrecioUnitario());
 
-                // ¡CRÍTICO! Debes asignarle el objeto 'pedidos' a cada detalle
-                // para que JPA sepa a qué cabecera pertenece cada fila.
                 detalle.setPedido(pedidos);
 
                 listaDetalles.add(detalle);
@@ -100,6 +100,7 @@ public class PedidosService {
                         detDto.setId(detalle.getId());
                         detDto.setIdProducto(detalle.getIdProducto());
                         detDto.setCantidad(detalle.getCantidad());
+                        detDto.setPrecioUnitario(detalle.getPrecioUnitario());
                         return detDto;
                     })
                     .collect(Collectors.toList());

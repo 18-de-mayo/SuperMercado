@@ -1,5 +1,7 @@
 package duoc.cl.despacho.model;
 
+import duoc.cl.despacho.model.EstadoDespacho;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.time.LocalDateTime;
@@ -8,6 +10,7 @@ import java.time.LocalDateTime;
 @Data
 @Entity
 @Table(name = "despachos")
+@Schema(description = "Entidad que representa un despacho en la base de datos")
 public class Despacho {
 
     @Id
@@ -29,8 +32,9 @@ public class Despacho {
     private String comuna;
 
     // Estado del despacho: PENDIENTE → EN_RUTA → ENTREGADO
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String estado;
+    private EstadoDespacho estado;
 
     @Column(name = "fecha_creacion", nullable = false)
     private LocalDateTime fechaCreacion;
@@ -40,7 +44,7 @@ public class Despacho {
     protected void onCreate() {
         this.fechaCreacion = LocalDateTime.now();
         if (this.estado == null) {
-            this.estado = "PENDIENTE";
+            this.estado = EstadoDespacho.PENDIENTE;
         }
     }
 }

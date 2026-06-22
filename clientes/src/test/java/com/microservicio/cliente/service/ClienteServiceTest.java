@@ -228,6 +228,63 @@ class ClienteServiceTest {
             assertThat(resultado).hasSize(1);
             assertThat(resultado.get(0).getNombre()).isEqualTo("Juan");
         }
+
+        @Test
+        @DisplayName("Debe retornar lista filtrada por estado ACTIVO")
+        void listarPorEstado_activo_retornaListaFiltrada() {
+            when(clienteRepository.findByEstado(EstadoCliente.ACTIVO)).thenReturn(List.of(clienteActivo));
+
+            var resultado = clienteService.listarClientesPorEstado(EstadoCliente.ACTIVO);
+
+            assertThat(resultado).hasSize(1);
+            assertThat(resultado.get(0).getEstado()).isEqualTo(EstadoCliente.ACTIVO);
+        }
+
+        @Test
+        @DisplayName("Debe retornar lista filtrada por estado INACTIVO")
+        void listarPorEstado_inactivo_retornaListaFiltrada() {
+            Cliente clienteInactivo = Cliente.builder()
+                    .id(2L)
+                    .nombre("Maria")
+                    .apellido("Lopez")
+                    .rut("98765432-1")
+                    .email("maria@email.com")
+                    .telefono("998877665")
+                    .direccion("Otra Direccion 456")
+                    .ciudad("Valparaiso")
+                    .region("Valparaiso")
+                    .fechaNacimiento(LocalDate.of(1985, 3, 20))
+                    .estado(EstadoCliente.INACTIVO)
+                    .fechaRegistro(LocalDateTime.now())
+                    .build();
+            when(clienteRepository.findByEstado(EstadoCliente.INACTIVO)).thenReturn(List.of(clienteInactivo));
+
+            var resultado = clienteService.listarClientesPorEstado(EstadoCliente.INACTIVO);
+
+            assertThat(resultado).hasSize(1);
+            assertThat(resultado.get(0).getEstado()).isEqualTo(EstadoCliente.INACTIVO);
+        }
+
+        @Test
+        @DisplayName("Debe retornar clientes que coincidan con el texto de busqueda en nombre o apellido")
+        void buscarPorNombre_textoCoincide_retornaLista() {
+            when(clienteRepository.buscarPorNombreOApellido("Juan")).thenReturn(List.of(clienteActivo));
+
+            var resultado = clienteService.buscarPorNombre("Juan");
+
+            assertThat(resultado).hasSize(1);
+            assertThat(resultado.get(0).getNombre()).isEqualTo("Juan");
+        }
+
+        @Test
+        @DisplayName("Debe retornar lista vacia cuando no hay coincidencias en la busqueda por nombre")
+        void buscarPorNombre_textoNoCoincide_retornaListaVacia() {
+            when(clienteRepository.buscarPorNombreOApellido("ZZZ")).thenReturn(List.of());
+
+            var resultado = clienteService.buscarPorNombre("ZZZ");
+
+            assertThat(resultado).isEmpty();
+        }
     }
 
     // ════════════════════════════════════════════════════════

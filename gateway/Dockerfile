@@ -1,24 +1,24 @@
-# ─── Etapa 1: Compilación ────────────────────────────────────────────────────
-FROM eclipse-temurin:21-jdk-alpine AS builder
+FROM maven:3.9.6-eclipse-temurin-21 AS builder
 
 WORKDIR /app
 
 COPY pom.xml .
-COPY .mvn/ .mvn/
-COPY mvnw .
-RUN chmod +x mvnw && ./mvnw dependency:go-offline -q
+RUN mvn dependency:go-offline -B
 
-COPY src/ src/
-RUN ./mvnw clean package -DskipTests -q
+COPY src ./src
+RUN mvn clean package -DskipTests -B
 
-# ─── Etapa 2: Imagen final de ejecución ──────────────────────────────────────
 FROM eclipse-temurin:21-jre-alpine
 
 WORKDIR /app
 
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+USER appuser
+
 COPY --from=builder /app/target/*.jar app.jar
 
-# El Gateway expone el puerto público de entrada al ecosistema
 EXPOSE 8080
+
+ENV SPRING_PROFILES_ACTIVE=prod
 
 ENTRYPOINT ["java", "-jar", "app.jar"]

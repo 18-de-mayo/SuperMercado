@@ -1,5 +1,6 @@
 package com.microservicio.pago.model;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.*;
@@ -20,6 +21,7 @@ import java.time.LocalDateTime;
 @Table(name = "pagos", uniqueConstraints = {
         @UniqueConstraint(columnNames = "pedido_id", name = "uk_pago_pedido")
 })
+@Schema(description = "Entidad que representa un pago en la base de datos")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -111,6 +113,7 @@ public class Pago {
 
     // ── Enums internos ──────────────────────────────────────────────────────
 
+    @Schema(description = "Estado del pago (PENDIENTE, COMPLETADO, FALLIDO, CANCELADO, REEMBOLSADO)")
     public enum EstadoPago {
         /** Pago registrado pero no procesado aún */
         PENDIENTE,
@@ -124,6 +127,7 @@ public class Pago {
         REEMBOLSADO
     }
 
+    @Schema(description = "Método de pago (EFECTIVO, TARJETA_DEBITO, TARJETA_CREDITO, TRANSFERENCIA_BANCARIA, VALE_VISTA)")
     public enum MetodoPago {
         EFECTIVO,
         TARJETA_DEBITO,

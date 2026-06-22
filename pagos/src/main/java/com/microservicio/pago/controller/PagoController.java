@@ -142,6 +142,23 @@ public class PagoController {
         return ResponseEntity.ok(pagoService.listarPorMetodoPago(metodoPago));
     }
 
+    // ── PUT: Actualizar pago ─────────────────────────────────────────────────
+
+    @PutMapping("/{id}")
+    @Operation(summary = "Actualizar datos de un pago",
+               description = "Actualiza los campos editables de un pago (notas, método de pago). No permite cambiar estado ni monto.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Pago actualizado"),
+            @ApiResponse(responseCode = "404", description = "Pago no encontrado"),
+            @ApiResponse(responseCode = "400", description = "Datos inválidos")
+    })
+    public ResponseEntity<PagoResponseDTO> actualizarPago(
+            @PathVariable Long id,
+            @Valid @RequestBody PagoRequestDTO dto) {
+        log.info("[PAGO] PUT /api/pagos/{}", id);
+        return ResponseEntity.ok(pagoService.actualizarPago(id, dto));
+    }
+
     // ── PATCH: Cambios de estado ─────────────────────────────────────────────
 
     @PatchMapping("/{id}/estado")

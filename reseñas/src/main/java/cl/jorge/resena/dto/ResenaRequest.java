@@ -1,5 +1,6 @@
 package cl.jorge.resena.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Max;
@@ -7,6 +8,7 @@ import jakarta.validation.constraints.Min;
 import lombok.Data;
 
 @Data
+@Schema(description = "Solicitud para crear o actualizar una reseña")
 public class ResenaRequest {
 
     @NotNull(message = "El ID del cliente es obligatorio")

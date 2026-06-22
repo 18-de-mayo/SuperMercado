@@ -1,5 +1,6 @@
 package com.microservicio.pago.client.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -11,6 +12,7 @@ import java.math.BigDecimal;
  */
 @Data
 @NoArgsConstructor
+@Schema(description = "DTO con datos del pedido obtenido desde el microservicio de pedidos")
 public class PedidoResponseDTO {
 
     private Long id;

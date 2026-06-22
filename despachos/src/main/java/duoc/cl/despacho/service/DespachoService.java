@@ -7,6 +7,7 @@ import duoc.cl.despacho.exception.DespachoNotFoundException;
 import duoc.cl.despacho.feign.PedidoFeignClient;
 import duoc.cl.despacho.feign.ProveedorFeignClient;
 import duoc.cl.despacho.model.Despacho;
+import duoc.cl.despacho.model.EstadoDespacho;
 import duoc.cl.despacho.repository.DespachoRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -87,7 +88,7 @@ public class DespachoService {
 
     // ── UPDATE ESTADO ────────────────────────────────────────────────
 
-    public DespachoDTO actualizarEstado(Long id, String nuevoEstado) {
+    public DespachoDTO actualizarEstado(Long id, EstadoDespacho nuevoEstado) {
         log.info("Solicitud de cambio de estado para despacho ID: {} hacia el estado: {}", id, nuevoEstado);
 
         Despacho despacho = repository.findById(id)
@@ -99,7 +100,7 @@ public class DespachoService {
         // Valida que la transición de estado sea válida
         validarTransicion(despacho.getEstado(), nuevoEstado);
 
-        String estadoAnterior = despacho.getEstado();
+        EstadoDespacho estadoAnterior = despacho.getEstado();
         despacho.setEstado(nuevoEstado);
         Despacho despachoActualizado = repository.save(despacho);
 
@@ -108,21 +109,61 @@ public class DespachoService {
         return mapToDTO(despachoActualizado);
     }
 
+    // ── UPDATE ────────────────────────────────────────────────────────
+
+    public DespachoDTO actualizar(Long id, DespachoRequest request) {
+        log.info("Actualizando despacho ID: {}", id);
+
+        Despacho despacho = repository.findById(id)
+                .orElseThrow(() -> {
+                    log.warn("Actualización fallida: No se encontró el despacho con ID: {}", id);
+                    return new DespachoNotFoundException(id);
+                });
+
+        // Validar proveedor si cambió
+        if (!despacho.getProveedorId().equals(request.getProveedorId())) {
+            try {
+                proveedorFeignClient.obtenerProveedor(request.getProveedorId());
+            } catch (Exception e) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "El proveedor con ID " + request.getProveedorId() + " no existe.");
+            }
+        }
+
+        despacho.setProveedorId(request.getProveedorId());
+        despacho.setDireccionDestino(request.getDireccionDestino());
+        despacho.setComuna(request.getComuna());
+
+        return mapToDTO(repository.save(despacho));
+    }
+
+    // ── DELETE ────────────────────────────────────────────────────────
+
+    public void eliminar(Long id) {
+        log.info("Eliminando despacho ID: {}", id);
+        Despacho despacho = repository.findById(id)
+                .orElseThrow(() -> {
+                    log.warn("Eliminación fallida: No se encontró el despacho con ID: {}", id);
+                    return new DespachoNotFoundException(id);
+                });
+        repository.delete(despacho);
+        log.info("Despacho ID {} eliminado exitosamente", id);
+    }
+
     // ── HELPERS ──────────────────────────────────────────────────────
 
-    private void validarTransicion(String estadoActual, String nuevoEstado) {
+    private void validarTransicion(EstadoDespacho estadoActual, EstadoDespacho nuevoEstado) {
         boolean valido = switch (estadoActual) {
-            case "PENDIENTE"  -> nuevoEstado.equals("EN_RUTA");
-            case "EN_RUTA"    -> nuevoEstado.equals("ENTREGADO");
-            case "ENTREGADO"  -> false;
-            default -> false;
+            case PENDIENTE -> nuevoEstado == EstadoDespacho.EN_RUTA;
+            case EN_RUTA   -> nuevoEstado == EstadoDespacho.ENTREGADO;
+            case ENTREGADO -> false;
         };
 
         if (!valido) {
             log.warn("Se rechazó una transición de estado ilegal: {} -> {}", estadoActual, nuevoEstado);
             throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
-                    "Transición inválida: " + estadoActual + " → " + nuevoEstado +
-                            ". Transiciones permitidas: PENDIENTE→EN_RUTA, EN_RUTA→ENTREGADO");
+                    "Transición inválida: " + estadoActual + " -> " + nuevoEstado +
+                            ". Transiciones permitidas: PENDIENTE->EN_RUTA, EN_RUTA->ENTREGADO");
         }
     }
 

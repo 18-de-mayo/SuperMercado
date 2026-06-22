@@ -1,29 +1,28 @@
 package duoc.cl.productos.dto;
 
 import jakarta.validation.constraints.*;
-
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
+import java.math.BigDecimal;
 
 @Data
+@Schema(description = "Solicitud para crear o actualizar un producto")
 public class ProductoRequest {
 
-    // no permite texto vacio
     @NotBlank(message = "el nombre es obligatorio")
     private String nombre;
 
-    // descripcion obligatoria
     @NotBlank(message = "la descripcion es obligatoria")
     private String descripcion;
 
-    // precio minimo
-    @Min(value = 1, message = "el precio debe ser mayor a 0")
-    private Double precio;
+    @DecimalMin(value = "0.01", message = "el precio debe ser mayor a 0")
+    @NotNull(message = "el precio es obligatorio")
+    private BigDecimal precio;
 
-    // stock no puede ser negativo
     @Min(value = 0, message = "la cantidad no puede ser negativo")
+    @NotNull(message = "la cantidad es obligatoria")
     private Integer cantidad;
 
-    //pedir id del proveedor creado
     @NotNull(message = "el proveedor es obligatorio")
     private Long proveedorId;
 }

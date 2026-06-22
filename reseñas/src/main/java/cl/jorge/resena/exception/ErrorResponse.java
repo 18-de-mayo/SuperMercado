@@ -1,5 +1,6 @@
 package cl.jorge.resena.exception;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Data;
 
@@ -12,6 +13,7 @@ import java.util.List;
  */
 @Data
 @Builder
+@Schema(description = "Respuesta de error estándar")
 public class ErrorResponse {
     private LocalDateTime timestamp;
     private int status;

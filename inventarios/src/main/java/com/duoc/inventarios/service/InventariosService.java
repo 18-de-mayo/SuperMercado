@@ -35,7 +35,6 @@ public class InventariosService {
         inventario.setProductoId(request.getProductoId());
         inventario.setStockDisponible(request.getStockDisponible());
         inventario.setStockMinimo(request.getStockMinimo());
-        inventario.setFechaActualizacion(request.getFechaActualizacion());
 
         log.info("Inventarion creado correctamente: " + inventario);
         return convertirADTO(inventariosRepository.save(inventario));
@@ -68,7 +67,6 @@ public class InventariosService {
         existente.setProductoId(request.getProductoId());
         existente.setStockDisponible(request.getStockDisponible());
         existente.setStockMinimo(request.getStockMinimo());
-        existente.setFechaActualizacion(request.getFechaActualizacion());
 
         return convertirADTO(inventariosRepository.save(existente));
     }

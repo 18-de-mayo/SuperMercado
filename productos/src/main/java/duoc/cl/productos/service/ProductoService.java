@@ -1,14 +1,11 @@
 package duoc.cl.productos.service;
 
-import duoc.cl.productos.client.CategoriaClient;
 import duoc.cl.productos.client.ProveedorClient;
 import duoc.cl.productos.dto.ProductoDTO;
 import duoc.cl.productos.dto.ProductoRequest;
 import duoc.cl.productos.exception.ProductoNotFoundException;
 import duoc.cl.productos.model.Producto;
 import duoc.cl.productos.repository.ProductoRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -24,10 +21,6 @@ public class ProductoService {
 
     private final ProductoRepository repository;
     private final ProveedorClient proveedorClient;
-
-    @Autowired
-    private CategoriaClient categoriaClient;
-
 
     public ProductoService(ProductoRepository repository,
                            ProveedorClient proveedorClient) {

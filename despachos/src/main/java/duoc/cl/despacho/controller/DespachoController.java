@@ -38,13 +38,7 @@ public class DespachoController {
     })
     @PostMapping
     public ResponseEntity<DespachoDTO> guardar(@Valid @RequestBody DespachoRequest request) {
-        log.info("Petición HTTP POST: Registrando nuevo despacho para el pedido ID: {} con Proveedor ID: {}",
-                request.getPedidoId(), request.getProveedorId());
-
-        DespachoDTO nuevoDespacho = service.guardar(request);
-
-        log.info("Despacho registrado exitosamente con ID asignado: {}", nuevoDespacho.getId());
-        return ResponseEntity.status(HttpStatus.CREATED).body(nuevoDespacho);
+        return ResponseEntity.status(HttpStatus.CREATED).body(service.guardar(request));
     }
 
     // ── GET: LISTAR TODOS ────────────────────────────────────────────
@@ -55,10 +49,10 @@ public class DespachoController {
     })
     @GetMapping
     public ResponseEntity<List<DespachoDTO>> listar() {
-        log.info("Petición HTTP GET: Solicitando el listado histórico de despachos");
+        log.info("cliente solicita listar");
         List<DespachoDTO> lista = service.listar();
         if (lista.isEmpty()) {
-            log.warn("La base de datos no contiene registros de despachos en este momento.");
+                log.warn("comentario");
             return ResponseEntity.noContent().build();
         }
         return ResponseEntity.ok(lista);
@@ -75,7 +69,6 @@ public class DespachoController {
     public ResponseEntity<DespachoDTO> buscarPorId(
             @Parameter(description = "ID único del despacho a consultar", example = "1")
             @PathVariable Long id) {
-        log.info("Petición HTTP GET: Consultando despacho por ID: {}", id);
         return ResponseEntity.ok(service.buscarPorId(id));
     }
 
@@ -93,7 +86,6 @@ public class DespachoController {
             @PathVariable Long id,
             @Parameter(description = "Nuevo estado (EN_RUTA o ENTREGADO)", example = "EN_RUTA")
             @RequestParam String nuevoEstado) {
-        log.info("Petición HTTP PATCH: Solicitando actualizar estado del despacho ID: {} hacia el nuevo estado: {}", id, nuevoEstado);
         return ResponseEntity.ok(service.actualizarEstado(id, nuevoEstado.toUpperCase()));
     }
 }

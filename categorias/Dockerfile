@@ -1,27 +1,24 @@
-# ─── Etapa 1: Compilación ────────────────────────────────────────────────────
-FROM eclipse-temurin:21-jdk-alpine AS builder
+FROM maven:3.9.6-eclipse-temurin-21 AS builder
 
 WORKDIR /app
 
-# Copia solo el pom y descarga dependencias (aprovecha la caché de capas de Docker)
 COPY pom.xml .
-COPY .mvn/ .mvn/
-COPY mvnw .
-RUN chmod +x mvnw && ./mvnw dependency:go-offline -q
+RUN mvn dependency:go-offline -B
 
-# Copia el código fuente y compila el JAR omitiendo los tests para acelerar el despliegue
-COPY src/ src/
-RUN ./mvnw clean package -DskipTests -q
+COPY src ./src
+RUN mvn clean package -DskipTests -B
 
-# ─── Etapa 2: Imagen final de ejecución ──────────────────────────────────────
 FROM eclipse-temurin:21-jre-alpine
 
 WORKDIR /app
 
-# AJUSTE: Copiamos usando un comodín (*.jar) para evitar fallos si cambia la versión en el pom
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+USER appuser
+
 COPY --from=builder /app/target/*.jar app.jar
 
-# AJUSTE: Exponemos el puerto real de categorías configurado en tu application.yml
 EXPOSE 8090
+
+ENV SPRING_PROFILES_ACTIVE=prod
 
 ENTRYPOINT ["java", "-jar", "app.jar"]

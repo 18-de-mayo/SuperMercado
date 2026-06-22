@@ -1,5 +1,6 @@
 package cl.jorge.resena.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
@@ -9,6 +10,7 @@ import lombok.Data;
  * IE 2.2.2: Validaciones Bean Validation aplicadas sobre el DTO.
  */
 @Data
+@Schema(description = "Solicitud para agregar una respuesta a una reseña")
 public class RespuestaResenaRequest {
 
     @NotBlank(message = "El nombre del autor es obligatorio")

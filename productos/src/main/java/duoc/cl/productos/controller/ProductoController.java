@@ -3,6 +3,12 @@ package duoc.cl.productos.controller;
 import duoc.cl.productos.dto.*;
 import duoc.cl.productos.service.ProductoService;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +20,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/productos")
+@Tag(name = "Productos", description = "API para la gestión de productos")
 public class ProductoController {
 
     @Autowired
@@ -23,7 +30,11 @@ public class ProductoController {
         this.productoService = productoService;
     }
 
-    // guardar producto
+    @Operation(summary = "Crear un nuevo producto")
+    @ApiResponses({
+        @ApiResponse(responseCode = "201", description = "Producto creado exitosamente"),
+        @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos")
+    })
     @PostMapping
     public ResponseEntity<ProductoDTO> guardar(
             @Valid @RequestBody ProductoRequest request){
@@ -33,7 +44,11 @@ public class ProductoController {
                 .body(productoService.guardar(request));
     }
 
-    // listar productos
+    @Operation(summary = "Listar todos los productos")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Lista de productos obtenida exitosamente"),
+        @ApiResponse(responseCode = "204", description = "No hay productos registrados")
+    })
     @GetMapping
     public ResponseEntity<List<ProductoDTO>> listar(){
 
@@ -46,23 +61,27 @@ public class ProductoController {
 
         return ResponseEntity.ok(productos);
     }
-    //bsucar por id
+    @Operation(summary = "Buscar producto por ID")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Producto encontrado"),
+        @ApiResponse(responseCode = "404", description = "Producto no encontrado")
+    })
     @GetMapping("/{id}")
     public ResponseEntity<ProductoDTO> buscar(@PathVariable Long id){
 
         return ResponseEntity.ok(productoService.buscar(id));
     }
 
-    // buscar productos por nombre
+    @Operation(summary = "Buscar productos por nombre")
     @GetMapping("/buscar")
     public ResponseEntity<List<ProductoDTO>> buscarPorNombre(
-            @RequestParam String nombre){
+            @Parameter(name = "nombre", description = "Nombre o parte del nombre a buscar") @RequestParam String nombre){
 
         return ResponseEntity.ok(
                 productoService.buscarPorNombre(nombre)
         );
     }
-    // productos con stock
+    @Operation(summary = "Listar productos con stock disponible")
     @GetMapping("/stock")
     public ResponseEntity<List<ProductoDTO>> listarConStock(){
 
@@ -70,7 +89,7 @@ public class ProductoController {
     }
 
 
-    // paginacion
+    @Operation(summary = "Listar productos con paginación")
     @GetMapping("/paginado")
     public ResponseEntity<Page<ProductoDTO>> listarPaginado(
             Pageable pageable){
@@ -78,13 +97,22 @@ public class ProductoController {
         return ResponseEntity.ok(productoService.listarPaginado(pageable));
     }
 
-    // PUT actualizar un producto)
+    @Operation(summary = "Actualizar un producto existente")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Producto actualizado"),
+        @ApiResponse(responseCode = "404", description = "Producto no encontrado"),
+        @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos")
+    })
     @PutMapping("/{id}")
     public ResponseEntity<ProductoDTO> actualizar(@PathVariable Long id, @Valid @RequestBody ProductoRequest request) {
         return ResponseEntity.ok(productoService.actualizar(id, request));
     }
 
-    // DELETE eliminar un producto)
+    @Operation(summary = "Eliminar un producto")
+    @ApiResponses({
+        @ApiResponse(responseCode = "204", description = "Producto eliminado exitosamente"),
+        @ApiResponse(responseCode = "404", description = "Producto no encontrado")
+    })
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminar(@PathVariable Long id) {
         productoService.eliminar(id);

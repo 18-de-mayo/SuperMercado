@@ -1,11 +1,13 @@
 package duoc.cl.despacho.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 // DTO de entrada — valida los datos al crear un despacho
 @Data
+@Schema(description = "Solicitud para registrar un nuevo despacho")
 public class DespachoRequest {
 
     // ID del pedido que origina el despacho — se valida que exista en MS pedido

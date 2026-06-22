@@ -98,6 +98,26 @@ public class CatalogoService {
         return mapToItemDTO(item);
     }
 
+    public List<CampanaDTO> listarCampanas() {
+        return campanaRepository.findAll().stream()
+                .map(this::mapToCampanaDTO)
+                .collect(Collectors.toList());
+    }
+
+    public CampanaDTO actualizarCampana(Long id, String nombre) {
+        CatalogoCampana campana = campanaRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Campaña no encontrada"));
+        campana.setNombreCampana(nombre);
+        return mapToCampanaDTO(campanaRepository.save(campana));
+    }
+
+    public void eliminarCampana(Long id) {
+        if (!campanaRepository.existsById(id)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Campaña no encontrada");
+        }
+        campanaRepository.deleteById(id);
+    }
+
     // Mapeadores útiles
     private CampanaDTO mapToCampanaDTO(CatalogoCampana campana) {
         CampanaDTO dto = new CampanaDTO();

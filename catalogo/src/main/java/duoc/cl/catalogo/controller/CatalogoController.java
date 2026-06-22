@@ -8,8 +8,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import java.util.List;
 
 @Slf4j
 @RestController
@@ -24,9 +26,17 @@ public class CatalogoController {
     }
 
     @GetMapping
-    @Operation(summary = "Endpoint de bienvenida")
-    public String holaMundo() {
-        return "hola Mundo!";
+    @Operation(summary = "Listar todas las campañas")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Lista de campañas"),
+        @ApiResponse(responseCode = "204", description = "No hay campañas registradas")
+    })
+    public ResponseEntity<List<CampanaDTO>> listarCampanas() {
+        var lista = service.listarCampanas();
+        if (lista.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.ok(lista);
     }
 
     // 1. Crear la campaña vacía: POST http://localhost:8083/api/v1/catalogos?nombre=Catálogo Invierno
@@ -37,7 +47,7 @@ public class CatalogoController {
         @ApiResponse(responseCode = "400", description = "Solicitud inválida")
     })
     public ResponseEntity<CampanaDTO> crearCampana(@RequestParam String nombre) {
-        return ResponseEntity.ok(service.crearCampana(nombre));
+        return ResponseEntity.status(HttpStatus.CREATED).body(service.crearCampana(nombre));
     }
 
     // 2. Agregar productos a la campaña
@@ -88,5 +98,28 @@ public class CatalogoController {
             log.error("Error al buscar producto individual con ID {}: {}", id, ex.getMessage());
             return ResponseEntity.status(404).body(ex.getMessage());
         }
+    }
+
+    @PutMapping("/{id}")
+    @Operation(summary = "Actualizar nombre de una campaña")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Campaña actualizada"),
+        @ApiResponse(responseCode = "404", description = "Campaña no encontrada")
+    })
+    public ResponseEntity<CampanaDTO> actualizarCampana(
+            @PathVariable Long id,
+            @RequestParam String nombre) {
+        return ResponseEntity.ok(service.actualizarCampana(id, nombre));
+    }
+
+    @DeleteMapping("/{id}")
+    @Operation(summary = "Eliminar una campaña")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "204", description = "Campaña eliminada"),
+        @ApiResponse(responseCode = "404", description = "Campaña no encontrada")
+    })
+    public ResponseEntity<Void> eliminarCampana(@PathVariable Long id) {
+        service.eliminarCampana(id);
+        return ResponseEntity.noContent().build();
     }
 }

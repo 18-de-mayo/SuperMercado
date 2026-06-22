@@ -109,6 +109,47 @@ public class DespachoService {
         return mapToDTO(despachoActualizado);
     }
 
+    // ── UPDATE ────────────────────────────────────────────────────────
+
+    public DespachoDTO actualizar(Long id, DespachoRequest request) {
+        log.info("Actualizando despacho ID: {}", id);
+
+        Despacho despacho = repository.findById(id)
+                .orElseThrow(() -> {
+                    log.warn("Actualización fallida: No se encontró el despacho con ID: {}", id);
+                    return new DespachoNotFoundException(id);
+                });
+
+        // Validar proveedor si cambió
+        if (!despacho.getProveedorId().equals(request.getProveedorId())) {
+            try {
+                proveedorFeignClient.obtenerProveedor(request.getProveedorId());
+            } catch (Exception e) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "El proveedor con ID " + request.getProveedorId() + " no existe.");
+            }
+        }
+
+        despacho.setProveedorId(request.getProveedorId());
+        despacho.setDireccionDestino(request.getDireccionDestino());
+        despacho.setComuna(request.getComuna());
+
+        return mapToDTO(repository.save(despacho));
+    }
+
+    // ── DELETE ────────────────────────────────────────────────────────
+
+    public void eliminar(Long id) {
+        log.info("Eliminando despacho ID: {}", id);
+        Despacho despacho = repository.findById(id)
+                .orElseThrow(() -> {
+                    log.warn("Eliminación fallida: No se encontró el despacho con ID: {}", id);
+                    return new DespachoNotFoundException(id);
+                });
+        repository.delete(despacho);
+        log.info("Despacho ID {} eliminado exitosamente", id);
+    }
+
     // ── HELPERS ──────────────────────────────────────────────────────
 
     private void validarTransicion(EstadoDespacho estadoActual, EstadoDespacho nuevoEstado) {

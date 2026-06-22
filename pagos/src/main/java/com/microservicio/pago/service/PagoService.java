@@ -63,4 +63,7 @@ public interface PagoService {
 
     /** Elimina un pago. Solo permitido si está en estado CANCELADO o FALLIDO. */
     void eliminarPago(Long id);
+
+    /** Actualiza los campos editables de un pago (notas, método de pago). */
+    PagoResponseDTO actualizarPago(Long id, PagoRequestDTO dto);
 }

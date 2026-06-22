@@ -1,5 +1,6 @@
 package com.duoc.inventarios.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -7,6 +8,7 @@ import lombok.Data;
 
 // DTO de entrada — valida los datos al crear o actualizar un inventario
 @Data
+@Schema(description = "Solicitud para crear o actualizar un registro de inventario")
 public class InventariosRequest {
 
     @NotNull(message = "El id del producto no puede ser nulo")

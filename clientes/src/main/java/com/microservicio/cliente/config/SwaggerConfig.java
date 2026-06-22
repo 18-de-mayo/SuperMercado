@@ -12,12 +12,12 @@ import java.util.List;
 
 /**
  * Configuración de Swagger / OpenAPI para la documentación del microservicio.
- * Accesible en: http://localhost:8081/swagger-ui.html
+ * Accesible en: http://localhost:8086/swagger-ui.html
  */
 @Configuration
 public class SwaggerConfig {
 
-    @Value("${server.port:8081}")
+    @Value("${server.port:8086}")
     private String serverPort;
 
     @Bean

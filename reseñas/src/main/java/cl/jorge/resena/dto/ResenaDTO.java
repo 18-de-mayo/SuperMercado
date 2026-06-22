@@ -1,11 +1,13 @@
 package cl.jorge.resena.dto;
 
 import cl.jorge.resena.model.EstadoResena;
-import lombok.Data; // <-- Asegúrate de que esta línea esté presente
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Data;
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
+@Schema(description = "DTO que representa una reseña completa con respuestas")
 public class ResenaDTO {
     private Long id;
     private Long clienteId;

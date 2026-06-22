@@ -2,9 +2,11 @@ package duoc.cl.productos.dto;
 
 import jakarta.validation.constraints.*;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 @Data
+@Schema(description = "Solicitud para crear o actualizar un producto")
 public class ProductoRequest {
 
     // no permite texto vacio

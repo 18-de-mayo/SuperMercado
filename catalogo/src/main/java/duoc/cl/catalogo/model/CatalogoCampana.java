@@ -1,5 +1,6 @@
 package duoc.cl.catalogo.model;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.util.ArrayList; // Importante
@@ -8,6 +9,7 @@ import java.util.List;
 @Entity
 @Table(name = "catalogo_campanas")
 @Data
+@Schema(description = "Entidad que representa una campaña promocional")
 public class CatalogoCampana {
 
     @Id

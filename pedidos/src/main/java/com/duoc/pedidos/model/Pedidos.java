@@ -1,5 +1,6 @@
 package com.duoc.pedidos.model;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -12,6 +13,7 @@ import java.util.List;
 @Data
 @Entity
 @Table(name = "pedidos")
+@Schema(description = "Entidad que representa un pedido")
 public class Pedidos {
 
     @Id

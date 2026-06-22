@@ -1,5 +1,6 @@
 package duoc.cl.despacho.model;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.time.LocalDateTime;
@@ -8,6 +9,7 @@ import java.time.LocalDateTime;
 @Data
 @Entity
 @Table(name = "despachos")
+@Schema(description = "Entidad que representa un despacho en la base de datos")
 public class Despacho {
 
     @Id

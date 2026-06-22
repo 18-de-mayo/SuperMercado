@@ -1,6 +1,7 @@
 package com.microservicio.cliente.dto;
 
 import com.microservicio.cliente.model.Cliente.EstadoCliente;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 
 import java.time.LocalDate;
@@ -14,6 +15,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Schema(description = "DTO con los datos completos de un cliente")
 public class ClienteResponseDTO {
 
     private Long id;

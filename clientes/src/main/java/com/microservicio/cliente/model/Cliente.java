@@ -1,5 +1,6 @@
 package com.microservicio.cliente.model;// y aquí estamos modelando cliente
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;// dependencia jpa para mapear la clase a una tabla en la base de datos
 import jakarta.validation.constraints.*;// dependencia llamada bean validation proveniente de jakarta que a su vez viene de hibernate, por ende este import viene de la dependencia hibernate
 import lombok.*;// lombok simplemente
@@ -12,6 +13,7 @@ import java.time.LocalDateTime;//¿LocalDateTime siempre muestra hora, por eso s
  * Cada cliente tiene una cuenta con datos personales, contacto y estado.
  */
 @Entity// proviene de la libreria jpa, mapea la clase como una entidad en la base de datos
+@Schema(description = "Entidad que representa un cliente en la base de datos")
 @Table(name = "clientes", uniqueConstraints = {//@Table especifica detalles para la tabla de bases de datos. ¿uniqueConstraints es un parametro?: sí. ¿cuantos parametros tiene @Table?: tiene la cantidad de parametros que se necesiten, por ejemplo, el numero que voy a decir ahora es 
         @UniqueConstraint(columnNames = "email"),
         @UniqueConstraint(columnNames = "rut")
@@ -99,6 +101,7 @@ public class Cliente {
         this.fechaActualizacion = LocalDateTime.now();
     }
 
+    @Schema(description = "Estado del cliente (ACTIVO, INACTIVO, SUSPENDIDO)")
     public enum EstadoCliente {//y las enumeraciones para el estado del cliente
         ACTIVO, INACTIVO, SUSPENDIDO
     }

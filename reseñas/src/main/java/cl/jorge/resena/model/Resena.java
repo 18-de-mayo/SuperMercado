@@ -1,5 +1,6 @@
 package cl.jorge.resena.model;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.time.LocalDateTime;
@@ -8,6 +9,7 @@ import java.util.List;
 @Data
 @Entity
 @Table(name = "resenas")
+@Schema(description = "Entidad que representa una reseña de producto")
 public class Resena {
 
     @Id

@@ -1,7 +1,5 @@
 package duoc.cl.catalogo.exception;
 
-import org.springframework.http.HttpStatus;
-
 import org.springframework.http.ResponseEntity;
 
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -35,25 +33,6 @@ public class GlobalExceptionHandler {
                 });
 
         return ResponseEntity.badRequest().body(errores);
-
-    }
-
-    // catalogo no encontrado
-    @ExceptionHandler(CatalogoNotFoundException.class)
-    public ResponseEntity<?> handleNotFound(
-            CatalogoNotFoundException ex){
-
-        Map<String, Object> error = new HashMap<>();
-
-        error.put("timestamp", LocalDateTime.now());
-
-        error.put("status", 404);
-
-        error.put("error", ex.getMessage());
-
-        return ResponseEntity
-                .status(HttpStatus.NOT_FOUND)
-                .body(error);
 
     }
 

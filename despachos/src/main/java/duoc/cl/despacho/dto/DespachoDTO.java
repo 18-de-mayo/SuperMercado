@@ -1,9 +1,11 @@
 package duoc.cl.despacho.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 // DTO de salida — datos que se retornan al consultar un despacho
 @Data
+@Schema(description = "DTO que representa un despacho")
 public class DespachoDTO {
     private Long id;
     private Long pedidoId;

@@ -1,5 +1,6 @@
 package com.duoc.inventarios.model;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -11,6 +12,7 @@ import lombok.NoArgsConstructor;
 @Data
 @Entity
 @Table(name = "inventarios")
+@Schema(description = "Entidad que representa el inventario en la base de datos")
 public class Inventarios {
 
     @Id

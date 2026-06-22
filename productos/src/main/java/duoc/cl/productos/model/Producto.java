@@ -1,13 +1,13 @@
 package duoc.cl.productos.model;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import lombok.Data;
-
-
 
 @Entity
 @Table(name = "productos")
 @Data
+@Schema(description = "Entidad que representa un producto")
 public class Producto {
 
     @Id

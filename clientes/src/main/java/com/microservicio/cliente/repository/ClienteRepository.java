@@ -57,10 +57,10 @@ OrderBy…Asc/Desc (por ejemplo OrderByFirstnameAscLastnameDesc)
     */
 
     /** Busca un cliente por su email */
-    Cliente findByEmail(String email);//¿"Email" en el nombre de la funcion es una palabra sin efecto en la deribacion de la consulta?, ¿Por qué se pone "Email" con mayuscula en el nombre de la funcion si el atributo no se escribe con mayuscula, afecta esto a la derivacion de la consulta?: 
+    Optional<Cliente> findByEmail(String email);
 
     /** Busca un cliente por su RUT */
-    Cliente findByRut(String rut);
+    Optional<Cliente> findByRut(String rut);
 
     /** Verifica si existe un cliente con el email dado */
     boolean existsByEmail(String email);//palabras clave de JpaRepository:

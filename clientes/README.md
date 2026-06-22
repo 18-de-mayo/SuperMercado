@@ -20,7 +20,7 @@ Gestiona el ciclo de vida completo de los clientes: registro, actualización, ca
 
 | Microservicio     | Puerto | Descripción                        |
 |-------------------|--------|------------------------------------|
-| **cliente**       | 8081   | Gestión de clientes ← *este*       |
+| **cliente**       | 8086   | Gestión de clientes ← *este*       |
 | pedidos           | 8082   | Gestión de órdenes de compra       |
 | productos         | 8083   | Catálogo de productos              |
 | catalogo          | 8084   | Gestión del catálogo               |
@@ -78,15 +78,15 @@ config/       → Swagger, WebClient
 ### Gateway routes (cuando aplique)
 
 ```
-/clientes/** → http://localhost:8081
+/clientes/** → http://localhost:8086
 ```
 
 ---
 
 ## 📖 Documentación Swagger
 
-- **Local:** http://localhost:8081/swagger-ui.html
-- **API Docs JSON:** http://localhost:8081/v3/api-docs
+- **Local:** http://localhost:8086/swagger-ui.html
+- **API Docs JSON:** http://localhost:8086/v3/api-docs
 
 ---
 
@@ -111,7 +111,7 @@ mvn clean install
 mvn spring-boot:run -Dspring-boot.run.profiles=dev
 ```
 
-El servicio queda disponible en: `http://localhost:8081`
+El servicio queda disponible en: `http://localhost:8086`
 
 ---
 
@@ -139,7 +139,7 @@ docker-compose down -v
 | `DATABASE_URL`      | URL JDBC de la base de datos remota |
 | `DATABASE_USERNAME` | Usuario de la base de datos         |
 | `DATABASE_PASSWORD` | Contraseña de la base de datos      |
-| `PORT`              | Puerto del servidor (default 8081)  |
+| `PORT`              | Puerto del servidor (default 8086)  |
 
 ```bash
 # Perfil prod (usa variables de entorno)

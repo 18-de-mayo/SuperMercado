@@ -1,5 +1,6 @@
 package com.duoc.pedidos.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
@@ -8,6 +9,7 @@ import lombok.Data;
 import java.util.List;
 
 @Data
+@Schema(description = "Solicitud para crear o actualizar un pedido")
 public class PedidosRequest {
 
     private Integer idCliente;

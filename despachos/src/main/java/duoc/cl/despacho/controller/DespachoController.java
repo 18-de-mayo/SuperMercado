@@ -2,7 +2,6 @@ package duoc.cl.despacho.controller;
 
 import duoc.cl.despacho.dto.DespachoDTO;
 import duoc.cl.despacho.dto.DespachoRequest;
-import duoc.cl.despacho.model.EstadoDespacho;
 import duoc.cl.despacho.service.DespachoService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -23,7 +22,7 @@ import java.util.List;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/v1/despacho")
+@RequestMapping("/api/v1/despachos")
 @RequiredArgsConstructor
 @Tag(name = "Microservicio Despacho", description = "Endpoints interactivos para el control, tracking e interoperabilidad de envíos físicos")
 public class DespachoController {
@@ -86,35 +85,7 @@ public class DespachoController {
             @Parameter(description = "ID del despacho a modificar", example = "1")
             @PathVariable Long id,
             @Parameter(description = "Nuevo estado (EN_RUTA o ENTREGADO)", example = "EN_RUTA")
-            @RequestParam EstadoDespacho nuevoEstado) {
-        return ResponseEntity.ok(service.actualizarEstado(id, nuevoEstado));
-    }
-
-    // ── PUT: ACTUALIZAR DESPACHO ─────────────────────────────────────
-    @Operation(summary = "Actualizar datos de un despacho",
-               description = "Actualiza los campos editables del despacho (dirección, comuna, proveedor). El estado se gestiona mediante el endpoint PATCH de estado.")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Despacho actualizado"),
-            @ApiResponse(responseCode = "404", description = "Despacho no encontrado"),
-            @ApiResponse(responseCode = "400", description = "Datos inválidos")
-    })
-    @PutMapping("/{id}")
-    public ResponseEntity<DespachoDTO> actualizar(
-            @PathVariable Long id,
-            @Valid @RequestBody DespachoRequest request) {
-        return ResponseEntity.ok(service.actualizar(id, request));
-    }
-
-    // ── DELETE: ELIMINAR DESPACHO ────────────────────────────────────
-    @Operation(summary = "Eliminar un despacho",
-               description = "Elimina permanentemente un despacho por su ID.")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "204", description = "Despacho eliminado"),
-            @ApiResponse(responseCode = "404", description = "Despacho no encontrado")
-    })
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> eliminar(@PathVariable Long id) {
-        service.eliminar(id);
-        return ResponseEntity.noContent().build();
+            @RequestParam String nuevoEstado) {
+        return ResponseEntity.ok(service.actualizarEstado(id, nuevoEstado.toUpperCase()));
     }
 }

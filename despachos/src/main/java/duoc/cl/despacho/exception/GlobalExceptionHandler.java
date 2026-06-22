@@ -1,5 +1,6 @@
 package duoc.cl.despacho.exception;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -10,6 +11,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -17,9 +19,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DespachoNotFoundException.class)
     public ResponseEntity<Map<String, Object>> handleNotFound(DespachoNotFoundException ex) {
         Map<String, Object> response = new HashMap<>();
-        response.put("timestamp", LocalDateTime.now());
-        response.put("status", HttpStatus.NOT_FOUND.value());
         response.put("error", ex.getMessage());
+        log.error("Error: {}", response);
 
         return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
     }
@@ -31,6 +32,8 @@ public class GlobalExceptionHandler {
         ex.getBindingResult().getFieldErrors().forEach(error -> {
             errores.put(error.getField(), error.getDefaultMessage());
         });
+
+        log.error("Error: {}", errores);
 
         return new ResponseEntity<>(errores, HttpStatus.BAD_REQUEST);
     }

@@ -19,6 +19,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -56,8 +57,8 @@ class CatalogoServiceTest {
         itemLeche = new CatalogoItem();
         itemLeche.setId(10L);
         itemLeche.setProductoId(100L);
-        itemLeche.setPrecioCatalogo(1500.0);
-        itemLeche.setPrecioOferta(1200.0);
+        itemLeche.setPrecioCatalogo(BigDecimal.valueOf(1500));
+        itemLeche.setPrecioOferta(BigDecimal.valueOf(1200));
 
         productoDisponible = new ProductoDTO();
         productoDisponible.setId(100L);
@@ -123,8 +124,8 @@ class CatalogoServiceTest {
             CatalogoItem savedItem = new CatalogoItem();
             savedItem.setId(10L);
             savedItem.setProductoId(100L);
-            savedItem.setPrecioCatalogo(1500.0);
-            savedItem.setPrecioOferta(1200.0);
+            savedItem.setPrecioCatalogo(BigDecimal.valueOf(1500));
+            savedItem.setPrecioOferta(BigDecimal.valueOf(1200));
             campanaConItem.getItems().add(savedItem);
 
             when(campanaRepository.findById(1L))
@@ -134,7 +135,7 @@ class CatalogoServiceTest {
             when(itemRepository.save(any(CatalogoItem.class))).thenReturn(itemLeche);
 
             // When
-            CampanaDTO resultado = catalogoService.agregarProductoACampana(1L, 100L, 1500.0, 1200.0);
+            CampanaDTO resultado = catalogoService.agregarProductoACampana(1L, 100L, BigDecimal.valueOf(1500), BigDecimal.valueOf(1200));
 
             // Then
             assertThat(resultado).isNotNull();
@@ -151,7 +152,7 @@ class CatalogoServiceTest {
             when(campanaRepository.findById(99L)).thenReturn(Optional.empty());
 
             // When / Then
-            assertThatThrownBy(() -> catalogoService.agregarProductoACampana(99L, 100L, 1500.0, 1200.0))
+            assertThatThrownBy(() -> catalogoService.agregarProductoACampana(99L, 100L, BigDecimal.valueOf(1500), BigDecimal.valueOf(1200)))
                     .isInstanceOf(ResponseStatusException.class)
                     .hasFieldOrPropertyWithValue("status", HttpStatus.NOT_FOUND)
                     .hasMessageContaining("Campaña no encontrada");
@@ -168,7 +169,7 @@ class CatalogoServiceTest {
             when(productoFeignClient.buscarProducto(999L)).thenThrow(new RuntimeException("Producto no encontrado"));
 
             // When / Then
-            assertThatThrownBy(() -> catalogoService.agregarProductoACampana(1L, 999L, 1500.0, 1200.0))
+            assertThatThrownBy(() -> catalogoService.agregarProductoACampana(1L, 999L, BigDecimal.valueOf(1500), BigDecimal.valueOf(1200)))
                     .isInstanceOf(ResponseStatusException.class)
                     .hasFieldOrPropertyWithValue("status", HttpStatus.BAD_REQUEST)
                     .hasMessageContaining("no existe en el catálogo maestro");
@@ -192,8 +193,8 @@ class CatalogoServiceTest {
             CatalogoItem item = new CatalogoItem();
             item.setId(10L);
             item.setProductoId(100L);
-            item.setPrecioCatalogo(1500.0);
-            item.setPrecioOferta(1200.0);
+            item.setPrecioCatalogo(BigDecimal.valueOf(1500));
+            item.setPrecioOferta(BigDecimal.valueOf(1200));
             item.setCampana(campanaVerano);
             campanaVerano.getItems().add(item);
 
@@ -250,8 +251,8 @@ class CatalogoServiceTest {
             assertThat(resultado.getNombreProducto()).isEqualTo("Leche Entera");
             assertThat(resultado.getDescripcion()).isEqualTo("Leche de vaca 1L");
             assertThat(resultado.getNombreProveedor()).isEqualTo("Lácteos SA");
-            assertThat(resultado.getPrecioCatalogo()).isEqualTo(1500.0);
-            assertThat(resultado.getPrecioOferta()).isEqualTo(1200.0);
+            assertThat(resultado.getPrecioCatalogo()).isEqualByComparingTo(BigDecimal.valueOf(1500));
+            assertThat(resultado.getPrecioOferta()).isEqualByComparingTo(BigDecimal.valueOf(1200));
             assertThat(resultado.getEstadoStock()).isEqualTo("Disponible");
         }
 

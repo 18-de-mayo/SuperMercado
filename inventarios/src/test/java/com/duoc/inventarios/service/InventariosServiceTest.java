@@ -15,6 +15,7 @@ import com.duoc.inventarios.exception.InventarioNotFoundException;
 import com.duoc.inventarios.exception.ProductoNotFoundException;
 import com.duoc.inventarios.model.Inventarios;
 import com.duoc.inventarios.repository.InventariosRepository;
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -50,20 +51,18 @@ class InventariosServiceTest {
         request.setProductoId(1L);
         request.setStockDisponible(50);
         request.setStockMinimo(10);
-        request.setFechaActualizacion("2025-06-21");
 
         entity = new Inventarios();
         entity.setProductoId(1L);
         entity.setStockDisponible(50);
         entity.setStockMinimo(10);
-        entity.setFechaActualizacion("2025-06-21");
 
         savedEntity = new Inventarios();
         savedEntity.setId(1);
         savedEntity.setProductoId(1L);
         savedEntity.setStockDisponible(50);
         savedEntity.setStockMinimo(10);
-        savedEntity.setFechaActualizacion("2025-06-21");
+        savedEntity.setFechaActualizacion(LocalDateTime.of(2025, 6, 21, 0, 0));
     }
 
     @Nested
@@ -83,7 +82,7 @@ class InventariosServiceTest {
             assertThat(result.getProductoId()).isEqualTo(1L);
             assertThat(result.getStockDisponible()).isEqualTo(50);
             assertThat(result.getStockMinimo()).isEqualTo(10);
-            assertThat(result.getFechaActualizacion()).isEqualTo("2025-06-21");
+            assertThat(result.getFechaActualizacion()).isEqualTo(LocalDateTime.of(2025, 6, 21, 0, 0));
         }
 
         @Test

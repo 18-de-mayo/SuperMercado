@@ -1,5 +1,6 @@
 package duoc.cl.despacho.dto;
 
+import duoc.cl.despacho.model.EstadoDespacho;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
@@ -11,7 +12,7 @@ public class DespachoDTO {
     private Long pedidoId;
     private Long proveedorId;
     private String nombreProveedor;  // viene del MS proveedor via Feign
-    private String estado;           // PENDIENTE | EN_RUTA | ENTREGADO
+    private EstadoDespacho estado;           // PENDIENTE | EN_RUTA | ENTREGADO
     private String direccionDestino;
     private String comuna;
 }

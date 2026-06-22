@@ -7,6 +7,7 @@ import duoc.cl.despacho.exception.DespachoNotFoundException;
 import duoc.cl.despacho.feign.PedidoFeignClient;
 import duoc.cl.despacho.feign.ProveedorFeignClient;
 import duoc.cl.despacho.model.Despacho;
+import duoc.cl.despacho.model.EstadoDespacho;
 import duoc.cl.despacho.repository.DespachoRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -61,7 +62,7 @@ public class DespachoServiceTest {
         mockDespacho.setProveedorId(5L);
         mockDespacho.setDireccionDestino("Av. Concha y Toro 1340");
         mockDespacho.setComuna("Puente Alto");
-        mockDespacho.setEstado("PENDIENTE");
+        mockDespacho.setEstado(EstadoDespacho.PENDIENTE);
 
         mockDespachoEnRuta = new Despacho();
         mockDespachoEnRuta.setId(1L);
@@ -69,7 +70,7 @@ public class DespachoServiceTest {
         mockDespachoEnRuta.setProveedorId(5L);
         mockDespachoEnRuta.setDireccionDestino("Av. Concha y Toro 1340");
         mockDespachoEnRuta.setComuna("Puente Alto");
-        mockDespachoEnRuta.setEstado("EN_RUTA");
+        mockDespachoEnRuta.setEstado(EstadoDespacho.EN_RUTA);
 
         mockDespachoEntregado = new Despacho();
         mockDespachoEntregado.setId(1L);
@@ -77,7 +78,7 @@ public class DespachoServiceTest {
         mockDespachoEntregado.setProveedorId(5L);
         mockDespachoEntregado.setDireccionDestino("Av. Concha y Toro 1340");
         mockDespachoEntregado.setComuna("Puente Alto");
-        mockDespachoEntregado.setEstado("ENTREGADO");
+        mockDespachoEntregado.setEstado(EstadoDespacho.ENTREGADO);
 
         mockProveedor = new ProveedorDTO();
         mockProveedor.setId(5L);
@@ -99,7 +100,7 @@ public class DespachoServiceTest {
 
             assertThat(result).isNotNull();
             assertThat(result.getId()).isEqualTo(1L);
-            assertThat(result.getEstado()).isEqualTo("PENDIENTE");
+            assertThat(result.getEstado()).isEqualTo(EstadoDespacho.PENDIENTE);
             assertThat(result.getNombreProveedor()).isEqualTo("Duoc Puente Alto");
             verify(repository, times(1)).save(any(Despacho.class));
         }
@@ -130,7 +131,7 @@ public class DespachoServiceTest {
 
             assertThat(result).hasSize(1);
             assertThat(result.get(0).getId()).isEqualTo(1L);
-            assertThat(result.get(0).getEstado()).isEqualTo("PENDIENTE");
+            assertThat(result.get(0).getEstado()).isEqualTo(EstadoDespacho.PENDIENTE);
         }
 
         @Test
@@ -158,7 +159,7 @@ public class DespachoServiceTest {
 
             assertThat(result).isNotNull();
             assertThat(result.getId()).isEqualTo(1L);
-            assertThat(result.getEstado()).isEqualTo("PENDIENTE");
+            assertThat(result.getEstado()).isEqualTo(EstadoDespacho.PENDIENTE);
         }
 
         @Test
@@ -182,10 +183,10 @@ public class DespachoServiceTest {
             when(repository.save(any(Despacho.class))).thenAnswer(invocation -> invocation.getArgument(0));
             when(proveedorFeignClient.obtenerProveedor(5L)).thenReturn(mockProveedor);
 
-            DespachoDTO result = service.actualizarEstado(1L, "EN_RUTA");
+            DespachoDTO result = service.actualizarEstado(1L, EstadoDespacho.EN_RUTA);
 
             assertThat(result).isNotNull();
-            assertThat(result.getEstado()).isEqualTo("EN_RUTA");
+            assertThat(result.getEstado()).isEqualTo(EstadoDespacho.EN_RUTA);
         }
 
         @Test
@@ -195,10 +196,10 @@ public class DespachoServiceTest {
             when(repository.save(any(Despacho.class))).thenAnswer(invocation -> invocation.getArgument(0));
             when(proveedorFeignClient.obtenerProveedor(5L)).thenReturn(mockProveedor);
 
-            DespachoDTO result = service.actualizarEstado(1L, "ENTREGADO");
+            DespachoDTO result = service.actualizarEstado(1L, EstadoDespacho.ENTREGADO);
 
             assertThat(result).isNotNull();
-            assertThat(result.getEstado()).isEqualTo("ENTREGADO");
+            assertThat(result.getEstado()).isEqualTo(EstadoDespacho.ENTREGADO);
         }
 
         @Test
@@ -206,7 +207,7 @@ public class DespachoServiceTest {
         void givenDespachoPendiente_whenActualizarEstadoEntregado_thenThrowResponseStatusException() {
             when(repository.findById(1L)).thenReturn(Optional.of(mockDespacho));
 
-            assertThatThrownBy(() -> service.actualizarEstado(1L, "ENTREGADO"))
+            assertThatThrownBy(() -> service.actualizarEstado(1L, EstadoDespacho.ENTREGADO))
                     .isInstanceOf(ResponseStatusException.class)
                     .hasMessageContaining("Transición inválida");
             verify(repository, never()).save(any(Despacho.class));
@@ -217,7 +218,7 @@ public class DespachoServiceTest {
         void givenDespachoEntregado_whenActualizarEstadoCualquier_thenThrowResponseStatusException() {
             when(repository.findById(1L)).thenReturn(Optional.of(mockDespachoEntregado));
 
-            assertThatThrownBy(() -> service.actualizarEstado(1L, "EN_RUTA"))
+            assertThatThrownBy(() -> service.actualizarEstado(1L, EstadoDespacho.EN_RUTA))
                     .isInstanceOf(ResponseStatusException.class)
                     .hasMessageContaining("Transición inválida");
             verify(repository, never()).save(any(Despacho.class));
@@ -228,7 +229,7 @@ public class DespachoServiceTest {
         void givenNonExistingId_whenActualizarEstado_thenThrowDespachoNotFoundException() {
             when(repository.findById(999L)).thenReturn(Optional.empty());
 
-            assertThatThrownBy(() -> service.actualizarEstado(999L, "EN_RUTA"))
+            assertThatThrownBy(() -> service.actualizarEstado(999L, EstadoDespacho.EN_RUTA))
                     .isInstanceOf(DespachoNotFoundException.class);
             verify(repository, never()).save(any(Despacho.class));
         }

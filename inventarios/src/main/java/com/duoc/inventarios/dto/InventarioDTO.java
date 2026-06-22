@@ -2,6 +2,7 @@ package com.duoc.inventarios.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
+import java.time.LocalDateTime;
 
 // DTO de salida — datos que se retornan al consultar un inventario
 @Data
@@ -16,5 +17,5 @@ public class InventarioDTO {
     @Schema(description = "Stock mínimo permitido")
     private Integer stockMinimo;
     @Schema(description = "Fecha de última actualización")
-    private String fechaActualizacion;
+    private LocalDateTime fechaActualizacion;
 }

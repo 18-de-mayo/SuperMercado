@@ -16,8 +16,11 @@ import com.duoc.pedidos.dto.PedidosRequest;
 import com.duoc.pedidos.exception.ClientesNotFoundException;
 import com.duoc.pedidos.exception.PedidosNotFoundException;
 import com.duoc.pedidos.model.DetallePedidos;
+import com.duoc.pedidos.model.EstadoPedido;
 import com.duoc.pedidos.model.Pedidos;
 import com.duoc.pedidos.repository.PedidosRepository;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -56,36 +59,36 @@ class PedidosServiceTest {
         DetallePedidosRequest detalleRequest = new DetallePedidosRequest();
         detalleRequest.setIdProducto(10);
         detalleRequest.setCantidad(2);
-        detalleRequest.setPrecioUnitario(1500);
+        detalleRequest.setPrecioUnitario(BigDecimal.valueOf(1500));
 
         request = new PedidosRequest();
         request.setIdCliente(1);
-        request.setFechaPedido("2025-06-21");
-        request.setEstadoPedido("PENDIENTE");
+        request.setFechaPedido(LocalDateTime.of(2025, 6, 21, 0, 0));
+        request.setEstadoPedido(EstadoPedido.PENDIENTE);
         request.setDetalles(List.of(detalleRequest));
 
         requestSinDetalles = new PedidosRequest();
         requestSinDetalles.setIdCliente(1);
-        requestSinDetalles.setFechaPedido("2025-06-21");
-        requestSinDetalles.setEstadoPedido("PENDIENTE");
+        requestSinDetalles.setFechaPedido(LocalDateTime.of(2025, 6, 21, 0, 0));
+        requestSinDetalles.setEstadoPedido(EstadoPedido.PENDIENTE);
         requestSinDetalles.setDetalles(null);
 
         entity = new Pedidos();
         entity.setIdCliente(1);
-        entity.setFechaPedido("2025-06-21");
-        entity.setEstadoPedido("PENDIENTE");
+        entity.setFechaPedido(LocalDateTime.of(2025, 6, 21, 0, 0));
+        entity.setEstadoPedido(EstadoPedido.PENDIENTE);
 
         savedEntity = new Pedidos();
         savedEntity.setId(1);
         savedEntity.setIdCliente(1);
-        savedEntity.setFechaPedido("2025-06-21");
-        savedEntity.setEstadoPedido("PENDIENTE");
+        savedEntity.setFechaPedido(LocalDateTime.of(2025, 6, 21, 0, 0));
+        savedEntity.setEstadoPedido(EstadoPedido.PENDIENTE);
 
         DetallePedidos detalle = new DetallePedidos();
         detalle.setId(1);
         detalle.setIdProducto(10);
         detalle.setCantidad(2);
-        detalle.setPrecioUnitario(1500);
+        detalle.setPrecioUnitario(BigDecimal.valueOf(1500));
         detalle.setPedido(savedEntity);
         savedEntity.setDetalles(List.of(detalle));
 
@@ -110,12 +113,12 @@ class PedidosServiceTest {
             assertThat(result).isNotNull();
             assertThat(result.getId()).isEqualTo(1);
             assertThat(result.getIdCliente()).isEqualTo(1);
-            assertThat(result.getEstadoPedido()).isEqualTo("PENDIENTE");
-            assertThat(result.getFechaPedido()).isEqualTo("2025-06-21");
+            assertThat(result.getEstadoPedido()).isEqualTo(EstadoPedido.PENDIENTE);
+            assertThat(result.getFechaPedido()).isEqualTo(LocalDateTime.of(2025, 6, 21, 0, 0));
             assertThat(result.getDetalles()).hasSize(1);
             assertThat(result.getDetalles().get(0).getIdProducto()).isEqualTo(10);
             assertThat(result.getDetalles().get(0).getCantidad()).isEqualTo(2);
-            assertThat(result.getDetalles().get(0).getPrecioUnitario()).isEqualTo(1500);
+            assertThat(result.getDetalles().get(0).getPrecioUnitario()).isEqualTo(BigDecimal.valueOf(1500));
         }
 
         @Test
@@ -126,8 +129,8 @@ class PedidosServiceTest {
             Pedidos savedWithoutDetails = new Pedidos();
             savedWithoutDetails.setId(2);
             savedWithoutDetails.setIdCliente(1);
-            savedWithoutDetails.setFechaPedido("2025-06-21");
-            savedWithoutDetails.setEstadoPedido("PENDIENTE");
+            savedWithoutDetails.setFechaPedido(LocalDateTime.of(2025, 6, 21, 0, 0));
+            savedWithoutDetails.setEstadoPedido(EstadoPedido.PENDIENTE);
             savedWithoutDetails.setDetalles(null);
 
             given(pedidosRepository.save(any(Pedidos.class))).willReturn(savedWithoutDetails);
@@ -220,8 +223,8 @@ class PedidosServiceTest {
             assertThat(result).isNotNull();
             assertThat(result.getId()).isEqualTo(1);
             assertThat(result.getIdCliente()).isEqualTo(1);
-            assertThat(result.getEstadoPedido()).isEqualTo("PENDIENTE");
-            assertThat(result.getFechaPedido()).isEqualTo("2025-06-21");
+            assertThat(result.getEstadoPedido()).isEqualTo(EstadoPedido.PENDIENTE);
+            assertThat(result.getFechaPedido()).isEqualTo(LocalDateTime.of(2025, 6, 21, 0, 0));
         }
 
         @Test

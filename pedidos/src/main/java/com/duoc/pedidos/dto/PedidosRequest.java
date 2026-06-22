@@ -1,11 +1,13 @@
 package com.duoc.pedidos.dto;
 
+import com.duoc.pedidos.model.EstadoPedido;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
@@ -14,11 +16,11 @@ public class PedidosRequest {
 
     private Integer idCliente;
 
-    @NotBlank(message = "La fecha de pedido no puede estar vacia")
-    private String fechaPedido;
+    @NotNull(message = "La fecha de pedido es obligatoria")
+    private LocalDateTime fechaPedido;
 
-    @NotBlank(message = "El estado de pedido no puede estar vacio")
-    private String estadoPedido;
+    @NotNull(message = "El estado de pedido es obligatorio")
+    private EstadoPedido estadoPedido;
 
     @NotEmpty(message = "El pedido debe contener al menos un producto")
     @Valid

@@ -16,11 +16,10 @@ public class CatalogoCampana {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "nombre_campana", nullable = false, length = 100)
     private String nombreCampana;
 
     // Inicializamos la lista aquí mismo para evitar NullPointerException e incompatibilidades de JPA
     @OneToMany(mappedBy = "campana", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CatalogoItem> items = new ArrayList<>();
 }
-
-//prueba Gonzalo-Model

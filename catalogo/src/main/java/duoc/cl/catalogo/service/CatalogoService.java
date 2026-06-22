@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -51,7 +52,7 @@ public class CatalogoService {
     // ====================================================================
     // OPTIMIZADO: Guardado transaccional y directo usando itemRepository
     // ====================================================================
-    public CampanaDTO agregarProductoACampana(Long campanaId, Long productoId, Double precioCat, Double precioOf) {
+    public CampanaDTO agregarProductoACampana(Long campanaId, Long productoId, BigDecimal precioCat, BigDecimal precioOf) {
         CatalogoCampana campana = campanaRepository.findById(campanaId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Campaña no encontrada"));
 

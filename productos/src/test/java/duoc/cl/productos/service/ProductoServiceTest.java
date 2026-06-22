@@ -21,6 +21,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -54,7 +55,7 @@ class ProductoServiceTest {
         request = new ProductoRequest();
         request.setNombre("Test Producto");
         request.setDescripcion("Descripcion test");
-        request.setPrecio(100.0);
+        request.setPrecio(BigDecimal.valueOf(100.0));
         request.setCantidad(10);
         request.setProveedorId(1L);
 
@@ -62,7 +63,7 @@ class ProductoServiceTest {
         producto.setId(1L);
         producto.setNombre("Test Producto");
         producto.setDescripcion("Descripcion test");
-        producto.setPrecio(100.0);
+        producto.setPrecio(BigDecimal.valueOf(100.0));
         producto.setCantidad(10);
         producto.setProveedorId(1L);
 
@@ -70,7 +71,7 @@ class ProductoServiceTest {
         productoGuardado.setId(1L);
         productoGuardado.setNombre("Test Producto");
         productoGuardado.setDescripcion("Descripcion test");
-        productoGuardado.setPrecio(100.0);
+        productoGuardado.setPrecio(BigDecimal.valueOf(100.0));
         productoGuardado.setCantidad(10);
         productoGuardado.setProveedorId(1L);
 
@@ -319,14 +320,14 @@ class ProductoServiceTest {
             productoSinProveedor.setId(2L);
             productoSinProveedor.setNombre("Sin Proveedor");
             productoSinProveedor.setDescripcion("Sin proveedor");
-            productoSinProveedor.setPrecio(50.0);
+            productoSinProveedor.setPrecio(BigDecimal.valueOf(50.0));
             productoSinProveedor.setCantidad(5);
             productoSinProveedor.setProveedorId(null);
 
             ProductoRequest requestSinProveedor = new ProductoRequest();
             requestSinProveedor.setNombre("Sin Proveedor");
             requestSinProveedor.setDescripcion("Sin proveedor");
-            requestSinProveedor.setPrecio(50.0);
+            requestSinProveedor.setPrecio(BigDecimal.valueOf(50.0));
             requestSinProveedor.setCantidad(5);
             requestSinProveedor.setProveedorId(null);
 

@@ -1,10 +1,10 @@
 package com.duoc.inventarios.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.Data;
+import java.time.LocalDateTime;
 
 // DTO de entrada — valida los datos al crear o actualizar un inventario
 @Data
@@ -23,6 +23,6 @@ public class InventariosRequest {
     @Positive(message = "El stock mínimo debe ser mayor a cero")
     private Integer stockMinimo;
 
-    @NotBlank(message = "La fecha de actualización no puede estar vacía")
-    private String fechaActualizacion;
+    @NotNull(message = "La fecha de actualización es obligatoria")
+    private LocalDateTime fechaActualizacion;
 }

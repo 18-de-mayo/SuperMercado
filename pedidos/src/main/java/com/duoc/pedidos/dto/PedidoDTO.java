@@ -1,9 +1,10 @@
 package com.duoc.pedidos.dto;
 
+import com.duoc.pedidos.model.EstadoPedido;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.persistence.Column;
 import lombok.Data;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
@@ -11,7 +12,7 @@ import java.util.List;
 public class PedidoDTO {
     private Integer id;
     private Integer idCliente;
-    private String estadoPedido;
-    private String fechaPedido;
+    private EstadoPedido estadoPedido;
+    private LocalDateTime fechaPedido;
     private List<DetallePedidoDTO> detalles;
 }

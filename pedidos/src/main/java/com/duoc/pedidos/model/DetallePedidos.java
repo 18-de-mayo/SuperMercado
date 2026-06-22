@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import java.math.BigDecimal;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -22,9 +23,12 @@ public class DetallePedidos {
     @JoinColumn(name = "id_pedido", nullable = false)
     private Pedidos pedido;
 
+    @Column(name = "id_producto")
     private Integer idProducto;
 
+    @Column(nullable = false)
     private Integer cantidad;
 
-    private Integer precioUnitario;
+    @Column(name = "precio_unitario", nullable = false, precision = 12, scale = 2)
+    private BigDecimal precioUnitario;
 }

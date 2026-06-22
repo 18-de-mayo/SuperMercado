@@ -7,6 +7,7 @@ import duoc.cl.despacho.exception.DespachoNotFoundException;
 import duoc.cl.despacho.feign.PedidoFeignClient;
 import duoc.cl.despacho.feign.ProveedorFeignClient;
 import duoc.cl.despacho.model.Despacho;
+import duoc.cl.despacho.model.EstadoDespacho;
 import duoc.cl.despacho.repository.DespachoRepository;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -87,7 +88,7 @@ public class DespachoService {
 
     // ── UPDATE ESTADO ────────────────────────────────────────────────
 
-    public DespachoDTO actualizarEstado(Long id, String nuevoEstado) {
+    public DespachoDTO actualizarEstado(Long id, EstadoDespacho nuevoEstado) {
         log.info("Solicitud de cambio de estado para despacho ID: {} hacia el estado: {}", id, nuevoEstado);
 
         Despacho despacho = repository.findById(id)
@@ -99,7 +100,7 @@ public class DespachoService {
         // Valida que la transición de estado sea válida
         validarTransicion(despacho.getEstado(), nuevoEstado);
 
-        String estadoAnterior = despacho.getEstado();
+        EstadoDespacho estadoAnterior = despacho.getEstado();
         despacho.setEstado(nuevoEstado);
         Despacho despachoActualizado = repository.save(despacho);
 
@@ -110,19 +111,18 @@ public class DespachoService {
 
     // ── HELPERS ──────────────────────────────────────────────────────
 
-    private void validarTransicion(String estadoActual, String nuevoEstado) {
+    private void validarTransicion(EstadoDespacho estadoActual, EstadoDespacho nuevoEstado) {
         boolean valido = switch (estadoActual) {
-            case "PENDIENTE"  -> nuevoEstado.equals("EN_RUTA");
-            case "EN_RUTA"    -> nuevoEstado.equals("ENTREGADO");
-            case "ENTREGADO"  -> false;
-            default -> false;
+            case PENDIENTE -> nuevoEstado == EstadoDespacho.EN_RUTA;
+            case EN_RUTA   -> nuevoEstado == EstadoDespacho.ENTREGADO;
+            case ENTREGADO -> false;
         };
 
         if (!valido) {
             log.warn("Se rechazó una transición de estado ilegal: {} -> {}", estadoActual, nuevoEstado);
             throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY,
-                    "Transición inválida: " + estadoActual + " → " + nuevoEstado +
-                            ". Transiciones permitidas: PENDIENTE→EN_RUTA, EN_RUTA→ENTREGADO");
+                    "Transición inválida: " + estadoActual + " -> " + nuevoEstado +
+                            ". Transiciones permitidas: PENDIENTE->EN_RUTA, EN_RUTA->ENTREGADO");
         }
     }
 

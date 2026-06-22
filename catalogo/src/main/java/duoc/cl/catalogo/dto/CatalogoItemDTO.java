@@ -2,6 +2,7 @@ package duoc.cl.catalogo.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
+import java.math.BigDecimal;
 
 @Data
 @Schema(description = "DTO de un item dentro de una campaña del catálogo")
@@ -18,9 +19,9 @@ public class CatalogoItemDTO {
     @Schema(description = "Nombre del proveedor")
     private String nombreProveedor;
     @Schema(description = "Precio en catálogo")
-    private Double precioCatalogo;
+    private BigDecimal precioCatalogo;
     @Schema(description = "Precio de oferta")
-    private Double precioOferta;
+    private BigDecimal precioOferta;
     @Schema(description = "Estado del stock")
     private String estadoStock;
 }

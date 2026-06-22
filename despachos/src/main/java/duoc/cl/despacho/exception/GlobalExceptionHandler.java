@@ -19,8 +19,6 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DespachoNotFoundException.class)
     public ResponseEntity<Map<String, Object>> handleNotFound(DespachoNotFoundException ex) {
         Map<String, Object> response = new HashMap<>();
-        //response.put("timestamp", LocalDateTime.now());
-        //response.put("status", HttpStatus.NOT_FOUND.value());
         response.put("error", ex.getMessage());
         log.error("Error: {}", response);
 

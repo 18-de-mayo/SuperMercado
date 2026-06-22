@@ -4,6 +4,7 @@ import duoc.cl.categoria.dto.ErrorResponse;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -14,6 +15,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -22,6 +24,7 @@ public class GlobalExceptionHandler {
     @ApiResponse(responseCode = "404", description = "La categoría solicitada no existe en la base de datos",
             content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     public ResponseEntity<ErrorResponse> handleNotFound(CategoriaNotFoundException ex) {
+        log.error("Recurso no localizado en la base de datos: {}", ex.getMessage());
         ErrorResponse error = ErrorResponse.builder()
                 .status(HttpStatus.NOT_FOUND.value())
                 .message(ex.getMessage())
@@ -35,6 +38,7 @@ public class GlobalExceptionHandler {
     @ApiResponse(responseCode = "400", description = "Violación de reglas de negocio de la aplicación",
             content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     public ResponseEntity<ErrorResponse> handleBusinessRules(IllegalArgumentException ex) {
+        log.warn("Conflicto de regla de negocio detectado: {}", ex.getMessage());
         ErrorResponse error = ErrorResponse.builder()
                 .status(HttpStatus.BAD_REQUEST.value())
                 .message(ex.getMessage())
@@ -51,6 +55,7 @@ public class GlobalExceptionHandler {
         Map<String, String> errores = new HashMap<>();
         ex.getBindingResult().getFieldErrors()
                 .forEach(e -> errores.put(e.getField(), e.getDefaultMessage()));
+        log.warn("Fallo en las validaciones perimetrales del DTO de entrada: {}", errores);
         return new ResponseEntity<>(errores, HttpStatus.BAD_REQUEST);
     }
 }

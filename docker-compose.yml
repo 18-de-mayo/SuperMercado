@@ -21,18 +21,15 @@ services:
           memory: 400M
 
   # ── BASE DE DATOS ────────────────────────────────────────────
-  mi-mysql:
+  mi-mysql-categoria:
     image: mysql:8.0
-    container_name: mi-mysql
-    ports:
-      - "3307:3306"
+    container_name: mi-mysql-categoria
     environment:
       MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: db_categorias
     networks:
       - ms-net
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot" ]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -41,17 +38,15 @@ services:
         limits:
           memory: 768M
 
-  mi-mysql-servicios:
+  mi-mysql-producto:
     image: mysql:8.0
-    container_name: mi-mysql-servicios
-    ports:
-      - "3309:3306"
+    container_name: mi-mysql-producto
     environment:
       MYSQL_ROOT_PASSWORD: root
     networks:
       - ms-net
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot" ]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -59,6 +54,143 @@ services:
       resources:
         limits:
           memory: 768M
+
+  mi-mysql-cliente:
+    image: mysql:8.0
+    container_name: mi-mysql-cliente
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+    networks:
+      - ms-net
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 768M
+
+  mi-mysql-pedido:
+    image: mysql:8.0
+    container_name: mi-mysql-pedido
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+    networks:
+      - ms-net
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 768M
+
+  mi-mysql-pago:
+    image: mysql:8.0
+    container_name: mi-mysql-pago
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+    networks:
+      - ms-net
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 768M
+
+  mi-mysql-inventario:
+    image: mysql:8.0
+    container_name: mi-mysql-inventario
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+    networks:
+      - ms-net
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 768M
+
+  mi-mysql-proveedor:
+    image: mysql:8.0
+    container_name: mi-mysql-proveedor
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+    networks:
+      - ms-net
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 768M
+
+  mi-mysql-catalogo:
+    image: mysql:8.0
+    container_name: mi-mysql-catalogo
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+    networks:
+      - ms-net
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 768M
+
+  mi-mysql-resena:
+    image: mysql:8.0
+    container_name: mi-mysql-resena
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+    networks:
+      - ms-net
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 768M
+
+  mi-mysql-despacho:
+    image: mysql:8.0
+    container_name: mi-mysql-despacho
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+    networks:
+      - ms-net
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 768M
+
 
   # ── MICROSERVICIOS ──────────────────────────────────────────
   ms-categoria:
@@ -77,9 +209,11 @@ services:
     networks:
       - ms-net
     depends_on:
-      mi-mysql:
+      mi-mysql-categoria:
         condition: service_healthy
       eureka-server:
+        condition: service_started
+      ms-producto:
         condition: service_started
     deploy:
       resources:
@@ -103,9 +237,11 @@ services:
     networks:
       - ms-net
     depends_on:
-      mi-mysql-servicios:
+      mi-mysql-producto:
         condition: service_healthy
       eureka-server:
+        condition: service_started
+      ms-cliente:
         condition: service_started
     deploy:
       resources:
@@ -130,9 +266,11 @@ services:
     networks:
       - ms-net
     depends_on:
-      mi-mysql-servicios:
+      mi-mysql-cliente:
         condition: service_healthy
       eureka-server:
+        condition: service_started
+      ms-pedido:
         condition: service_started
     deploy:
       resources:
@@ -157,9 +295,11 @@ services:
     networks:
       - ms-net
     depends_on:
-      mi-mysql-servicios:
+      mi-mysql-pedido:
         condition: service_healthy
       eureka-server:
+        condition: service_started
+      ms-pago:
         condition: service_started
     deploy:
       resources:
@@ -184,9 +324,11 @@ services:
     networks:
       - ms-net
     depends_on:
-      mi-mysql-servicios:
+      mi-mysql-pago:
         condition: service_healthy
       eureka-server:
+        condition: service_started
+      ms-inventario:
         condition: service_started
     deploy:
       resources:
@@ -210,9 +352,11 @@ services:
     networks:
       - ms-net
     depends_on:
-      mi-mysql-servicios:
+      mi-mysql-inventario:
         condition: service_healthy
       eureka-server:
+        condition: service_started
+      ms-proveedor:
         condition: service_started
     deploy:
       resources:
@@ -235,9 +379,11 @@ services:
     networks:
       - ms-net
     depends_on:
-      mi-mysql-servicios:
+      mi-mysql-proveedor:
         condition: service_healthy
       eureka-server:
+        condition: service_started
+      ms-catalogo:
         condition: service_started
     deploy:
       resources:
@@ -261,9 +407,11 @@ services:
     networks:
       - ms-net
     depends_on:
-      mi-mysql-servicios:
+      mi-mysql-catalogo:
         condition: service_healthy
       eureka-server:
+        condition: service_started
+      ms-resena:
         condition: service_started
     deploy:
       resources:
@@ -290,9 +438,11 @@ services:
     networks:
       - ms-net
     depends_on:
-      mi-mysql-servicios:
+      mi-mysql-resena:
         condition: service_healthy
       eureka-server:
+        condition: service_started
+      ms-despacho:
         condition: service_started
     deploy:
       resources:
@@ -318,7 +468,7 @@ services:
     networks:
       - ms-net
     depends_on:
-      mi-mysql-servicios:
+      mi-mysql-despacho:
         condition: service_healthy
       eureka-server:
         condition: service_started

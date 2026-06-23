@@ -8,6 +8,9 @@ RUN mvn dependency:go-offline -B
 COPY src ./src
 RUN mvn clean package -DskipTests -B
 
+
+
+# ─── Etapa 2: Imagen final ────────────────────────────────────────────────────
 FROM eclipse-temurin:21-jre-alpine
 
 WORKDIR /app
@@ -15,6 +18,7 @@ WORKDIR /app
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 USER appuser
 
+COPY --from=builder /root/.m2 /root/.m2
 COPY --from=builder /app/target/*.jar app.jar
 
 EXPOSE 8081

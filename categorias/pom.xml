@@ -12,7 +12,7 @@
 	</parent>
 
 	<groupId>duoc.cl</groupId>
-	<artifactId>categoriaModel</artifactId>
+	<artifactId>categorias</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>categoriaModel</name>
 	<description>Microservicio de Categorias</description>
@@ -41,12 +41,6 @@
 			<groupId>org.springdoc</groupId>
 			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
 			<version>2.6.0</version>
-		</dependency>
-
-		<dependency>
-			<groupId>net.datafaker</groupId>
-			<artifactId>datafaker</artifactId>
-			<version>2.2.2</version>
 		</dependency>
 
 		<dependency>

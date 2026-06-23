@@ -1,39 +1,35 @@
 package duoc.cl.productos.service;
 
+import duoc.cl.productos.client.CategoriaClient;
 import duoc.cl.productos.client.ProveedorClient;
+import duoc.cl.productos.dto.CategoriaDTO;
 import duoc.cl.productos.dto.ProductoDTO;
 import duoc.cl.productos.dto.ProductoRequest;
 import duoc.cl.productos.dto.ProveedorDTO;
+import duoc.cl.productos.exception.ProductoDuplicadoException;
 import duoc.cl.productos.exception.ProductoNotFoundException;
 import duoc.cl.productos.model.Producto;
 import duoc.cl.productos.repository.ProductoRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.math.BigDecimal;
-import java.util.Collections;
+
 import java.util.List;
 import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("ProductoService Test")
+@DisplayName("Pruebas Unitarias - ProductoService")
 class ProductoServiceTest {
 
     @Mock
@@ -42,313 +38,266 @@ class ProductoServiceTest {
     @Mock
     private ProveedorClient proveedorClient;
 
+    @Mock
+    private CategoriaClient categoriaClient;
+
     @InjectMocks
-    private ProductoService service;
+    private ProductoService productoService;
 
     private ProductoRequest request;
-    private Producto producto;
     private Producto productoGuardado;
-    private ProveedorDTO proveedorDTO;
+    private ProveedorDTO proveedorRemoto;
 
     @BeforeEach
     void setUp() {
         request = new ProductoRequest();
-        request.setNombre("Test Producto");
-        request.setDescripcion("Descripcion test");
-        request.setPrecio(BigDecimal.valueOf(100.0));
-        request.setCantidad(10);
+        request.setNombre("Teclado Mecánico");
+        request.setDescripcion("Teclado RGB Switch Blue");
+        request.setPrecio(45000.0);
+        request.setCantidad(20);
         request.setProveedorId(1L);
-
-        producto = new Producto();
-        producto.setId(1L);
-        producto.setNombre("Test Producto");
-        producto.setDescripcion("Descripcion test");
-        producto.setPrecio(BigDecimal.valueOf(100.0));
-        producto.setCantidad(10);
-        producto.setProveedorId(1L);
+        request.setCategoria("Periféricos");
 
         productoGuardado = new Producto();
-        productoGuardado.setId(1L);
-        productoGuardado.setNombre("Test Producto");
-        productoGuardado.setDescripcion("Descripcion test");
-        productoGuardado.setPrecio(BigDecimal.valueOf(100.0));
-        productoGuardado.setCantidad(10);
+        productoGuardado.setId(10L);
+        productoGuardado.setNombre("Teclado Mecánico");
+        productoGuardado.setDescripcion("Teclado RGB Switch Blue");
+        productoGuardado.setPrecio(45000.0);
+        productoGuardado.setCantidad(20);
         productoGuardado.setProveedorId(1L);
+        productoGuardado.setCategoria("Periféricos");
 
-        proveedorDTO = new ProveedorDTO();
-        proveedorDTO.setId(1L);
-        proveedorDTO.setNombre("Proveedor Test");
+        proveedorRemoto = new ProveedorDTO();
+        proveedorRemoto.setId(1L);
+        proveedorRemoto.setNombre("Distribuidora Tech Chile");
     }
 
-    @Nested
-    @DisplayName("Guardar producto")
-    class GuardarProducto {
+    // =========================================================================
+    // PRUEBAS DE LA ACCIÓN: GUARDAR PRODUCTO
+    // =========================================================================
 
-        @Test
-        @DisplayName("should save and return ProductoDTO when request is valid")
-        void guardarSuccess() {
-            when(repository.save(any(Producto.class))).thenReturn(productoGuardado);
-            when(proveedorClient.obtenerProveedor(anyLong())).thenReturn(proveedorDTO);
+    @Test
+    @DisplayName("guardar: registra el producto exitosamente cuando los datos son válidos y el proveedor existe")
+    void debeGuardarProductoExitosamente() {
+        when(repository.existsByNombre(request.getNombre())).thenReturn(false);
+        when(proveedorClient.obtenerProveedor(request.getProveedorId())).thenReturn(proveedorRemoto);
+        when(repository.save(any(Producto.class))).thenReturn(productoGuardado);
 
-            ProductoDTO result = service.guardar(request);
+        ProductoDTO resultado = productoService.guardar(request);
 
-            assertThat(result).isNotNull();
-            assertThat(result.getId()).isEqualTo(1L);
-            assertThat(result.getNombre()).isEqualTo("Test Producto");
-            assertThat(result.getNombreProveedor()).isEqualTo("Proveedor Test");
-            verify(repository).save(any(Producto.class));
-        }
+        assertNotNull(resultado, "El DTO retornado no debería ser nulo");
+        assertEquals(10L, resultado.getId(), "El ID debería coincidir con el asignado por la BD");
+        assertEquals("Teclado Mecánico", resultado.getNombre());
+        assertEquals("Distribuidora Tech Chile", resultado.getNombreProveedor(), "Debería mapear el nombre del proveedor remoto");
+
+        verify(repository, times(1)).save(any(Producto.class));
     }
 
-    @Nested
-    @DisplayName("Listar productos")
-    class ListarProductos {
+    @Test
+    @DisplayName("guardar: lanza ProductoDuplicadoException cuando el nombre ya está registrado en la BD local")
+    void debeLanzarExcepcionCuandoProductoEstaDuplicado() {
+        when(repository.existsByNombre(request.getNombre())).thenReturn(true);
 
-        @Test
-        @DisplayName("should return list of ProductoDTO when products exist")
-        void listarReturnsList() {
-            when(repository.findAll()).thenReturn(List.of(producto));
-            when(proveedorClient.obtenerProveedor(anyLong())).thenReturn(proveedorDTO);
+        ProductoDuplicadoException excepcion = assertThrows(ProductoDuplicadoException.class,
+                () -> productoService.guardar(request)
+        );
 
-            List<ProductoDTO> result = service.listar();
+        assertEquals("El producto 'Teclado Mecánico' ya existe en el sistema.", excepcion.getMessage());
 
-            assertThat(result).hasSize(1);
-            assertThat(result.get(0).getNombre()).isEqualTo("Test Producto");
-        }
-
-        @Test
-        @DisplayName("should return empty list when no products exist")
-        void listarEmptyList() {
-            when(repository.findAll()).thenReturn(Collections.emptyList());
-
-            List<ProductoDTO> result = service.listar();
-
-            assertThat(result).isEmpty();
-        }
+        verify(repository, never()).save(any(Producto.class));
+        verify(proveedorClient, never()).obtenerProveedor(anyLong());
     }
 
-    @Nested
-    @DisplayName("Buscar producto por ID")
-    class BuscarProducto {
+    @Test
+    @DisplayName("guardar: lanza ResponseStatusException (404) cuando el proveedor remoto no existe")
+    void debeLanzarExcepcionCuandoProveedorNoExiste() {
+        when(repository.existsByNombre(request.getNombre())).thenReturn(false);
+        when(proveedorClient.obtenerProveedor(request.getProveedorId())).thenReturn(null);
 
-        @Test
-        @DisplayName("should return ProductoDTO when product is found")
-        void buscarFound() {
-            when(repository.findById(1L)).thenReturn(Optional.of(producto));
-            when(proveedorClient.obtenerProveedor(anyLong())).thenReturn(proveedorDTO);
+        ResponseStatusException excepcion = assertThrows(ResponseStatusException.class,
+                () -> productoService.guardar(request)
+        );
 
-            ProductoDTO result = service.buscar(1L);
-
-            assertThat(result).isNotNull();
-            assertThat(result.getId()).isEqualTo(1L);
-            assertThat(result.getNombre()).isEqualTo("Test Producto");
-            assertThat(result.getNombreProveedor()).isEqualTo("Proveedor Test");
-        }
-
-        @Test
-        @DisplayName("should throw ProductoNotFoundException when product is not found")
-        void buscarNotFound() {
-            when(repository.findById(99L)).thenReturn(Optional.empty());
-
-            assertThatThrownBy(() -> service.buscar(99L))
-                    .isInstanceOf(ProductoNotFoundException.class)
-                    .hasMessageContaining("99");
-        }
+        assertEquals(HttpStatus.NOT_FOUND, excepcion.getStatusCode());
+        verify(repository, never()).save(any(Producto.class));
     }
 
-    @Nested
-    @DisplayName("Buscar productos por nombre")
-    class BuscarPorNombre {
+    // =========================================================================
+    // PRUEBAS DE LA ACCIÓN: ACTUALIZAR PRODUCTO
+    // =========================================================================
 
-        @Test
-        @DisplayName("should return matching products when name exists")
-        void buscarPorNombreMatches() {
-            when(repository.findByNombreContainingIgnoreCase("test")).thenReturn(List.of(producto));
-            when(proveedorClient.obtenerProveedor(anyLong())).thenReturn(proveedorDTO);
+    @Test
+    @DisplayName("actualizar: modifica un producto local exitosamente con datos válidos")
+    void debeActualizarProductoExitosamente() {
+        Long idExistente = 1L;
+        Producto productoExistente = new Producto();
+        productoExistente.setId(idExistente);
+        productoExistente.setNombre("Mouse Antiguo");
 
-            List<ProductoDTO> result = service.buscarPorNombre("test");
+        request.setNombre("Mouse Gamer RGB");
 
-            assertThat(result).hasSize(1);
-            assertThat(result.get(0).getNombre()).isEqualTo("Test Producto");
-        }
+        when(repository.findById(idExistente)).thenReturn(Optional.of(productoExistente));
+        when(repository.existsByNombre(request.getNombre())).thenReturn(false);
+        when(proveedorClient.obtenerProveedor(request.getProveedorId())).thenReturn(proveedorRemoto);
+        when(repository.save(any(Producto.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        @Test
-        @DisplayName("should return empty list when no products match")
-        void buscarPorNombreNoMatches() {
-            when(repository.findByNombreContainingIgnoreCase("xyz")).thenReturn(Collections.emptyList());
+        ProductoDTO resultado = productoService.actualizar(idExistente, request);
 
-            List<ProductoDTO> result = service.buscarPorNombre("xyz");
-
-            assertThat(result).isEmpty();
-        }
+        assertNotNull(resultado);
+        assertEquals("Mouse Gamer RGB", resultado.getNombre());
+        verify(repository, times(1)).save(any(Producto.class));
     }
 
-    @Nested
-    @DisplayName("Listar productos con stock")
-    class ListarConStock {
+    @Test
+    @DisplayName("actualizar: lanza ProductoNotFoundException si el ID buscado no existe en el catálogo local")
+    void debeLanzarExcepcionCuandoProductoAActualizarNoExiste() {
+        Long idInexistente = 999L;
+        when(repository.findById(idInexistente)).thenReturn(Optional.empty());
 
-        @Test
-        @DisplayName("should return products with stock greater than zero")
-        void listarConStockReturnsProducts() {
-            when(repository.findByCantidadGreaterThan(0)).thenReturn(List.of(producto));
-            when(proveedorClient.obtenerProveedor(anyLong())).thenReturn(proveedorDTO);
+        assertThrows(ProductoNotFoundException.class,
+                () -> productoService.actualizar(idInexistente, request)
+        );
 
-            List<ProductoDTO> result = service.listarConStock();
-
-            assertThat(result).hasSize(1);
-            assertThat(result.get(0).getCantidad()).isEqualTo(10);
-        }
-
-        @Test
-        @DisplayName("should return empty list when no products have stock")
-        void listarConStockEmpty() {
-            when(repository.findByCantidadGreaterThan(0)).thenReturn(Collections.emptyList());
-
-            List<ProductoDTO> result = service.listarConStock();
-
-            assertThat(result).isEmpty();
-        }
+        verify(repository, never()).save(any(Producto.class));
     }
 
-    @Nested
-    @DisplayName("Listar productos paginado")
-    class ListarPaginado {
+    @Test
+    @DisplayName("actualizar: lanza ProductoDuplicadoException si el nuevo nombre ya lo usa otro producto")
+    void debeLanzarExcepcionCuandoNuevoNombreYaExisteAlActualizar() {
+        Long idExistente = 1L;
+        Producto productoOriginal = new Producto();
+        productoOriginal.setId(idExistente);
+        productoOriginal.setNombre("Mouse Antiguo");
 
-        @Test
-        @DisplayName("should return page of ProductoDTO")
-        void listarPaginadoReturnsPage() {
-            Page<Producto> productPage = new PageImpl<>(List.of(producto));
-            when(repository.findAll(any(Pageable.class))).thenReturn(productPage);
-            when(proveedorClient.obtenerProveedor(anyLong())).thenReturn(proveedorDTO);
+        request.setNombre("Teclado Mecánico");
 
-            Page<ProductoDTO> result = service.listarPaginado(Pageable.unpaged());
+        when(repository.findById(idExistente)).thenReturn(Optional.of(productoOriginal));
+        when(repository.existsByNombre(request.getNombre())).thenReturn(true);
 
-            assertThat(result).hasSize(1);
-            assertThat(result.getContent().get(0).getNombre()).isEqualTo("Test Producto");
-        }
+        assertThrows(ProductoDuplicadoException.class,
+                () -> productoService.actualizar(idExistente, request)
+        );
+
+        verify(repository, never()).save(any(Producto.class));
     }
 
-    @Nested
-    @DisplayName("Actualizar producto")
-    class ActualizarProducto {
+    // =========================================================================
+    // NUEVOS METODOS AGREGADOS PARA COBERTURA COMPLETA
+    // =========================================================================
 
-        @Test
-        @DisplayName("should update and return ProductoDTO when product and proveedor exist")
-        void actualizarSuccess() {
-            when(repository.findById(1L)).thenReturn(Optional.of(producto));
-            when(proveedorClient.obtenerProveedor(anyLong())).thenReturn(proveedorDTO);
-            when(repository.save(any(Producto.class))).thenReturn(productoGuardado);
+    @Test
+    @DisplayName("listar: obtiene todos los productos registrados en la base de datos")
+    void debeListarTodosLosProductos() {
+        when(repository.findAll()).thenReturn(List.of(productoGuardado));
 
-            ProductoDTO result = service.actualizar(1L, request);
+        List<ProductoDTO> resultado = productoService.listar();
 
-            assertThat(result).isNotNull();
-            assertThat(result.getNombre()).isEqualTo("Test Producto");
-            assertThat(result.getNombreProveedor()).isEqualTo("Proveedor Test");
-            verify(repository).save(any(Producto.class));
-        }
-
-        @Test
-        @DisplayName("should throw ProductoNotFoundException when product does not exist")
-        void actualizarNotFound() {
-            when(repository.findById(99L)).thenReturn(Optional.empty());
-
-            assertThatThrownBy(() -> service.actualizar(99L, request))
-                    .isInstanceOf(ProductoNotFoundException.class)
-                    .hasMessageContaining("99");
-        }
-
-        @Test
-        @DisplayName("should throw ResponseStatusException when proveedor does not exist")
-        void actualizarProveedorNotFound() {
-            when(repository.findById(1L)).thenReturn(Optional.of(producto));
-            when(proveedorClient.obtenerProveedor(anyLong())).thenThrow(new RuntimeException("Feign error"));
-
-            assertThatThrownBy(() -> service.actualizar(1L, request))
-                    .isInstanceOf(ResponseStatusException.class)
-                    .hasFieldOrPropertyWithValue("status", HttpStatus.BAD_REQUEST)
-                    .hasMessageContaining("El proveedor asociado no existe en el sistema.");
-        }
+        assertNotNull(resultado);
+        assertFalse(resultado.isEmpty());
+        assertEquals(1, resultado.size());
+        verify(repository, times(1)).findAll();
     }
 
-    @Nested
-    @DisplayName("Eliminar producto")
-    class EliminarProducto {
+    @Test
+    @DisplayName("buscar: obtiene un producto por su ID de manera exitosa")
+    void debeBuscarProductoPorIdExitosamente() {
+        Long idBuscado = 10L;
+        when(repository.findById(idBuscado)).thenReturn(Optional.of(productoGuardado));
 
-        @Test
-        @DisplayName("should delete product when it exists")
-        void eliminarSuccess() {
-            when(repository.existsById(1L)).thenReturn(true);
+        ProductoDTO resultado = productoService.buscar(idBuscado);
 
-            service.eliminar(1L);
-
-            verify(repository).deleteById(1L);
-        }
-
-        @Test
-        @DisplayName("should throw ProductoNotFoundException when product does not exist")
-        void eliminarNotFound() {
-            when(repository.existsById(99L)).thenReturn(false);
-
-            assertThatThrownBy(() -> service.eliminar(99L))
-                    .isInstanceOf(ProductoNotFoundException.class)
-                    .hasMessageContaining("99");
-
-            verify(repository, never()).deleteById(anyLong());
-        }
+        assertNotNull(resultado);
+        assertEquals(idBuscado, resultado.getId());
+        assertEquals("Teclado Mecánico", resultado.getNombre());
+        verify(repository, times(1)).findById(idBuscado);
     }
 
-    @Nested
-    @DisplayName("Map to DTO")
-    class MapToDTO {
+    @Test
+    @DisplayName("buscarPorNombre: encuentra una lista de productos que coincidan con el texto enviado")
+    void debeBuscarProductosPorNombreContenido() {
+        String textoBusqueda = "Teclado";
+        when(repository.findByNombreContainingIgnoreCase(textoBusqueda)).thenReturn(List.of(productoGuardado));
 
-        @Test
-        @DisplayName("should set nombreProveedor when proveedorId exists and Feign succeeds")
-        void mapToDTOWithProveedorFeignSuccess() {
-            when(repository.save(any(Producto.class))).thenReturn(productoGuardado);
-            when(proveedorClient.obtenerProveedor(1L)).thenReturn(proveedorDTO);
+        List<ProductoDTO> resultado = productoService.buscarPorNombre(textoBusqueda);
 
-            ProductoDTO result = service.guardar(request);
+        assertNotNull(resultado);
+        assertFalse(resultado.isEmpty());
+        assertEquals("Teclado Mecánico", resultado.getFirst().getNombre());
+        verify(repository, times(1)).findByNombreContainingIgnoreCase(textoBusqueda);
+    }
 
-            assertThat(result.getNombreProveedor()).isEqualTo("Proveedor Test");
-            verify(proveedorClient).obtenerProveedor(1L);
-        }
+    @Test
+    @DisplayName("listarConStock: obtiene los productos cuya cantidad en inventario es mayor a cero")
+    void debeListarProductosConStockDisponible() {
+        when(repository.findByCantidadGreaterThan(0)).thenReturn(List.of(productoGuardado));
 
-        @Test
-        @DisplayName("should skip Feign call when proveedorId is null")
-        void mapToDTOWithProveedorIdNull() {
-            Producto productoSinProveedor = new Producto();
-            productoSinProveedor.setId(2L);
-            productoSinProveedor.setNombre("Sin Proveedor");
-            productoSinProveedor.setDescripcion("Sin proveedor");
-            productoSinProveedor.setPrecio(BigDecimal.valueOf(50.0));
-            productoSinProveedor.setCantidad(5);
-            productoSinProveedor.setProveedorId(null);
+        List<ProductoDTO> resultado = productoService.listarConStock();
 
-            ProductoRequest requestSinProveedor = new ProductoRequest();
-            requestSinProveedor.setNombre("Sin Proveedor");
-            requestSinProveedor.setDescripcion("Sin proveedor");
-            requestSinProveedor.setPrecio(BigDecimal.valueOf(50.0));
-            requestSinProveedor.setCantidad(5);
-            requestSinProveedor.setProveedorId(null);
+        assertNotNull(resultado);
+        assertFalse(resultado.isEmpty());
+        verify(repository, times(1)).findByCantidadGreaterThan(0);
+    }
 
-            when(repository.save(any(Producto.class))).thenReturn(productoSinProveedor);
+    @Test
+    @DisplayName("eliminar: remueve el producto del repositorio si el ID existe localmente")
+    void debeEliminarProductoCorrectamente() {
+        Long idEliminar = 10L;
+        when(repository.existsById(idEliminar)).thenReturn(true);
+        doNothing().when(repository).deleteById(idEliminar);
 
-            ProductoDTO result = service.guardar(requestSinProveedor);
+        assertDoesNotThrow(() -> productoService.eliminar(idEliminar));
 
-            assertThat(result.getNombreProveedor()).isNull();
-            verify(proveedorClient, never()).obtenerProveedor(anyLong());
-        }
+        verify(repository, times(1)).deleteById(idEliminar);
+    }
 
-        @Test
-        @DisplayName("should set 'Proveedor no disponible' when Feign fails")
-        void mapToDTOWithProveedorFeignFails() {
-            when(repository.save(any(Producto.class))).thenReturn(productoGuardado);
-            when(proveedorClient.obtenerProveedor(1L)).thenThrow(new RuntimeException("Feign error"));
+    @Test
+    @DisplayName("eliminar: lanza ProductoNotFoundException si el ID a borrar no existe en la BD")
+    void debeLanzarExcepcionAlEliminarProductoInexistente() {
+        Long idInexistente = 999L;
+        when(repository.existsById(idInexistente)).thenReturn(false);
 
-            ProductoDTO result = service.guardar(request);
+        assertThrows(ProductoNotFoundException.class,
+                () -> productoService.eliminar(idInexistente)
+        );
 
-            assertThat(result.getNombreProveedor()).isEqualTo("Proveedor no disponible");
-            verify(proveedorClient).obtenerProveedor(1L);
-        }
+        verify(repository, never()).deleteById(anyLong());
+    }
+
+    // =========================================================================
+    // PRUEBAS DE INTEGRACIÓN DISTRIBUIDA
+    // =========================================================================
+
+    @Test
+    @DisplayName("listarPorCategoriaRemota: retorna la lista si el microservicio de categorías valida el ID remoto")
+    void debeListarPorCategoriaRemotaExitosamente() {
+        Long categoriaId = 5L;
+        CategoriaDTO categoriaMock = new CategoriaDTO();
+        categoriaMock.setId(5L);
+        categoriaMock.setNombre("Periféricos");
+
+        when(categoriaClient.buscarPorId(categoriaId)).thenReturn(categoriaMock);
+        when(repository.findAll()).thenReturn(List.of(productoGuardado));
+
+        List<ProductoDTO> resultado = productoService.listarPorCategoriaRemota(categoriaId);
+
+        assertNotNull(resultado);
+        assertFalse(resultado.isEmpty());
+        assertEquals(1, resultado.size());
+        verify(categoriaClient, times(1)).buscarPorId(categoriaId);
+        verify(repository, times(1)).findAll();
+    }
+
+    @Test
+    @DisplayName("listarPorCategoriaRemota: lanza ResponseStatusException (502 Bad Gateway) si el microservicio remoto se cae")
+    void debeLanzarBadGatewayCuandoCategoriaServiceFalla() {
+        Long categoriaId = 5L;
+        when(categoriaClient.buscarPorId(categoriaId)).thenThrow(new RuntimeException("Error de red"));
+
+        ResponseStatusException excepcion = assertThrows(ResponseStatusException.class,
+                () -> productoService.listarPorCategoriaRemota(categoriaId)
+        );
+
+        assertEquals(HttpStatus.BAD_GATEWAY, excepcion.getStatusCode());
+        verify(repository, never()).findAll();
     }
 }

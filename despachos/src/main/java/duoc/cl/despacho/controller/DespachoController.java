@@ -2,6 +2,7 @@ package duoc.cl.despacho.controller;
 
 import duoc.cl.despacho.dto.DespachoDTO;
 import duoc.cl.despacho.dto.DespachoRequest;
+import duoc.cl.despacho.model.EstadoDespacho;
 import duoc.cl.despacho.service.DespachoService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -85,7 +86,7 @@ public class DespachoController {
             @Parameter(description = "ID del despacho a modificar", example = "1")
             @PathVariable Long id,
             @Parameter(description = "Nuevo estado (EN_RUTA o ENTREGADO)", example = "EN_RUTA")
-            @RequestParam String nuevoEstado) {
-        return ResponseEntity.ok(service.actualizarEstado(id, nuevoEstado.toUpperCase()));
+            @RequestParam EstadoDespacho nuevoEstado) {
+        return ResponseEntity.ok(service.actualizarEstado(id, nuevoEstado));
     }
 }

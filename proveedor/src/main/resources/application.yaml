@@ -1,10 +1,10 @@
 spring:
   application:
-    name: ms-producto
+    name: ms-proveedor
 
   datasource:
-
-    url: ${DB_URL:jdbc:mysql://localhost:3306/db_productos?createDatabaseIfNotExist=true&serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true}
+    #Mapeado al contenedor 'mi-mysql-servicios' y a la BD 'proveedor' según tu compose
+    url: ${DB_URL:jdbc:mysql://localhost:3306/proveedor?createDatabaseIfNotExist=true&serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true}
     username: ${DB_USER:root}
     password: ${DB_PASS:root}
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -13,6 +13,7 @@ spring:
     hibernate:
       ddl-auto: none
     show-sql: true
+    open-in-view: false
     database-platform: org.hibernate.dialect.MySQLDialect
 
   flyway:
@@ -20,9 +21,8 @@ spring:
     baseline-on-migrate: true
     locations: classpath:db/migration
 
-
 server:
-  port: ${PORT:8081}
+  port: ${PORT:8082}
   error:
     include-message: always
     include-binding-errors: always
@@ -30,14 +30,14 @@ server:
 logging:
   level:
     root: info
-    com:
-      duoc:
-        productos: info
+    duoc:
+      cl:
+        proveedor: info
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
     file: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
   file:
-    name: logs/productos.log
+    name: logs/proveedores.log
   logback:
     rollingpolicy:
       max-file-size: 10MB
@@ -53,7 +53,7 @@ springdoc:
 eureka:
   client:
     service-url:
-      #Cambiado para apuntar exactamente al host 'eureka-server' definido en tu compose
+      #Cambiado para apuntar al host 'eureka-server' de tu compose
       defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://eureka-server:8761/eureka/}
     register-with-eureka: true
     fetch-registry: true

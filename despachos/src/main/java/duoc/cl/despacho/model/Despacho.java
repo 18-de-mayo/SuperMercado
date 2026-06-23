@@ -3,7 +3,10 @@ package duoc.cl.despacho.model;
 import duoc.cl.despacho.model.EstadoDespacho;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.time.LocalDateTime;
 
 // Entidad JPA — representa la tabla 'despachos' en la base de datos
@@ -11,6 +14,8 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "despachos")
 @Schema(description = "Entidad que representa un despacho en la base de datos")
+@AllArgsConstructor
+@NoArgsConstructor
 public class Despacho {
 
     @Id

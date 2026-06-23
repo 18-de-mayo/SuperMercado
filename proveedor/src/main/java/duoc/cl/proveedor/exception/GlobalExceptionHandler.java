@@ -1,4 +1,4 @@
-package duoc.cl.productos.exception;
+package duoc.cl.proveedor.exception;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -31,26 +31,16 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
-    @ExceptionHandler(ProductoDuplicadoException.class)
-    public ResponseEntity<Map<String, Object>> handleProductoDuplicado(ProductoDuplicadoException ex) {
-        log.warn("error producto duplicado en los campos: {}", ex.getMessage());
+    @ExceptionHandler(ProveedorNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleProveedorNotFound(ProveedorNotFoundException ex) {
+        log.warn("error proveedor no encontrado en los campos: {}", ex.getMessage());
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("timestamp", LocalDateTime.now());
-        response.put("status", HttpStatus.CONFLICT.value()); // Código 409
-        response.put("error", "Conflicto de Negocio");
-        response.put("mensaje", ex.getMessage()); // Evita duplicar el texto
-
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
-    }
-    @ExceptionHandler(ProductoNotFoundException.class)
-    public ResponseEntity<Map<String, Object>> handleProductoNotFound(ProductoNotFoundException ex) {
-        log.warn("error producto duplicado en los campos: {}", ex.getMessage());
         Map<String, Object> response = new HashMap<>();
         response.put("timestamp", LocalDateTime.now());
         response.put("status", HttpStatus.NOT_FOUND.value());
-        response.put("error", "El producto no existe en el sistema.");
+        response.put("error", "El proveedor no existe en el sistema.");
         response.put("mensaje", ex.getMessage());
+
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
     }
 }

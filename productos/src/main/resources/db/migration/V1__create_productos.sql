@@ -5,5 +5,6 @@ CREATE TABLE productos (
     descripcion VARCHAR(255) NOT NULL,
     precio DOUBLE,
     cantidad INT,
-    proveedor_id INT
+    proveedor_id BIGINT,
+    categoria VARCHAR(100)
 );

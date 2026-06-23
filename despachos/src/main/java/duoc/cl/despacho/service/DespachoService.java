@@ -57,7 +57,7 @@ public class DespachoService {
         despacho.setProveedorId(request.getProveedorId());
         despacho.setDireccionDestino(request.getDireccionDestino());
         despacho.setComuna(request.getComuna());
-        despacho.setEstado("PENDIENTE"); // Fuerza el estado inicial por defecto
+        despacho.setEstado(EstadoDespacho.PENDIENTE); // Fuerza el estado inicial por defecto
 
         Despacho despachoGuardado = repository.save(despacho);
 

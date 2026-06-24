@@ -290,17 +290,6 @@ public class PagoServiceImpl implements PagoService {
         return mapToDTO(actualizado);
     }
 
-    // ── Utilidades ───────────────────────────────────────────────────────────
-
-    /**
-     * Genera un número de recibo único con formato: REC-YYYY-NNNNNN.
-     * Ejemplo: REC-2025-000042
-     */
-    private String generarNumeroRecibo(Long id) {
-        String anio = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy"));
-        return String.format("REC-%s-%06d", anio, id);
-    }
-
     /** Mapea una entidad Pago a su DTO de respuesta. */
     PagoResponseDTO mapToDTO(Pago pago) {
         return PagoResponseDTO.builder()

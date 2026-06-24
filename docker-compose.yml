@@ -20,10 +20,10 @@ services:
         limits:
           memory: 400M
 
-  # ── BASE DE DATOS ────────────────────────────────────────────
-  mi-mysql-categoria:
+  # ── BASE DE DATOS (compartida) ──────────────────────────────
+  mi-mysql:
     image: mysql:8.0
-    container_name: mi-mysql-categoria
+    container_name: mi-mysql
     environment:
       MYSQL_ROOT_PASSWORD: root
     networks:
@@ -33,163 +33,11 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+      start_period: 120s
     deploy:
       resources:
         limits:
-          memory: 768M
-
-  mi-mysql-producto:
-    image: mysql:8.0
-    container_name: mi-mysql-producto
-    environment:
-      MYSQL_ROOT_PASSWORD: root
-    networks:
-      - ms-net
-    healthcheck:
-      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot" ]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-    deploy:
-      resources:
-        limits:
-          memory: 768M
-
-  mi-mysql-cliente:
-    image: mysql:8.0
-    container_name: mi-mysql-cliente
-    environment:
-      MYSQL_ROOT_PASSWORD: root
-    networks:
-      - ms-net
-    healthcheck:
-      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot" ]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-    deploy:
-      resources:
-        limits:
-          memory: 768M
-
-  mi-mysql-pedido:
-    image: mysql:8.0
-    container_name: mi-mysql-pedido
-    environment:
-      MYSQL_ROOT_PASSWORD: root
-    networks:
-      - ms-net
-    healthcheck:
-      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot" ]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-    deploy:
-      resources:
-        limits:
-          memory: 768M
-
-  mi-mysql-pago:
-    image: mysql:8.0
-    container_name: mi-mysql-pago
-    environment:
-      MYSQL_ROOT_PASSWORD: root
-    networks:
-      - ms-net
-    healthcheck:
-      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot" ]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-    deploy:
-      resources:
-        limits:
-          memory: 768M
-
-  mi-mysql-inventario:
-    image: mysql:8.0
-    container_name: mi-mysql-inventario
-    environment:
-      MYSQL_ROOT_PASSWORD: root
-    networks:
-      - ms-net
-    healthcheck:
-      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot" ]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-    deploy:
-      resources:
-        limits:
-          memory: 768M
-
-  mi-mysql-proveedor:
-    image: mysql:8.0
-    container_name: mi-mysql-proveedor
-    environment:
-      MYSQL_ROOT_PASSWORD: root
-    networks:
-      - ms-net
-    healthcheck:
-      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot" ]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-    deploy:
-      resources:
-        limits:
-          memory: 768M
-
-  mi-mysql-catalogo:
-    image: mysql:8.0
-    container_name: mi-mysql-catalogo
-    environment:
-      MYSQL_ROOT_PASSWORD: root
-    networks:
-      - ms-net
-    healthcheck:
-      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot" ]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-    deploy:
-      resources:
-        limits:
-          memory: 768M
-
-  mi-mysql-resena:
-    image: mysql:8.0
-    container_name: mi-mysql-resena
-    environment:
-      MYSQL_ROOT_PASSWORD: root
-    networks:
-      - ms-net
-    healthcheck:
-      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot" ]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-    deploy:
-      resources:
-        limits:
-          memory: 768M
-
-  mi-mysql-despacho:
-    image: mysql:8.0
-    container_name: mi-mysql-despacho
-    environment:
-      MYSQL_ROOT_PASSWORD: root
-    networks:
-      - ms-net
-    healthcheck:
-      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot" ]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-    deploy:
-      resources:
-        limits:
-          memory: 768M
+          memory: 1G
 
 
   # ── MICROSERVICIOS ──────────────────────────────────────────
@@ -209,11 +57,9 @@ services:
     networks:
       - ms-net
     depends_on:
-      mi-mysql-categoria:
+      mi-mysql:
         condition: service_healthy
       eureka-server:
-        condition: service_started
-      ms-producto:
         condition: service_started
     deploy:
       resources:
@@ -229,7 +75,7 @@ services:
       - "8081:8081"
     environment:
       - SPRING_PROFILES_ACTIVE=prod
-      - DB_URL=jdbc:mysql://mi-mysql-servicios:3306/db_productos?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      - DB_URL=jdbc:mysql://mi-mysql:3306/db_productos?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
       - DB_USER=root
       - DB_PASS=root
       - API_PROVEEDORES_URL=http://ms-proveedor:8082
@@ -237,11 +83,9 @@ services:
     networks:
       - ms-net
     depends_on:
-      mi-mysql-producto:
+      mi-mysql:
         condition: service_healthy
       eureka-server:
-        condition: service_started
-      ms-cliente:
         condition: service_started
     deploy:
       resources:
@@ -257,7 +101,7 @@ services:
       - "8086:8086"
     environment:
       - SPRING_PROFILES_ACTIVE=prod
-      - DATABASE_URL=jdbc:mysql://mi-mysql-servicios:3306/cliente_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+      - DATABASE_URL=jdbc:mysql://mi-mysql:3306/cliente_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
       - DATABASE_USERNAME=root
       - DATABASE_PASSWORD=root
       - MICROSERVICIOS_PEDIDOS_URL=http://ms-pedido:8084
@@ -266,11 +110,9 @@ services:
     networks:
       - ms-net
     depends_on:
-      mi-mysql-cliente:
+      mi-mysql:
         condition: service_healthy
       eureka-server:
-        condition: service_started
-      ms-pedido:
         condition: service_started
     deploy:
       resources:
@@ -286,7 +128,7 @@ services:
       - "8084:8084"
     environment:
       - SPRING_PROFILES_ACTIVE=prod
-      - DB_URL=jdbc:mysql://mi-mysql-servicios:3306/pedidos?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      - DB_URL=jdbc:mysql://mi-mysql:3306/pedidos?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
       - DB_USER=root
       - DB_PASS=root
       - API_PRODUCTOS_URL=http://ms-producto:8081/api/v1/
@@ -295,11 +137,9 @@ services:
     networks:
       - ms-net
     depends_on:
-      mi-mysql-pedido:
+      mi-mysql:
         condition: service_healthy
       eureka-server:
-        condition: service_started
-      ms-pago:
         condition: service_started
     deploy:
       resources:
@@ -315,7 +155,7 @@ services:
       - "8085:8085"
     environment:
       - SPRING_PROFILES_ACTIVE=prod
-      - DATABASE_URL=jdbc:mysql://mi-mysql-servicios:3306/pago_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+      - DATABASE_URL=jdbc:mysql://mi-mysql:3306/pago_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
       - DATABASE_USERNAME=root
       - DATABASE_PASSWORD=root
       - PEDIDOS_SERVICE_URL=http://ms-pedido:8084
@@ -324,11 +164,9 @@ services:
     networks:
       - ms-net
     depends_on:
-      mi-mysql-pago:
+      mi-mysql:
         condition: service_healthy
       eureka-server:
-        condition: service_started
-      ms-inventario:
         condition: service_started
     deploy:
       resources:
@@ -344,7 +182,7 @@ services:
       - "8088:8088"
     environment:
       - SPRING_PROFILES_ACTIVE=prod
-      - DB_URL=jdbc:mysql://mi-mysql-servicios:3306/db_inventarios?createDatabaseIfNotExist=true&serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true
+      - DB_URL=jdbc:mysql://mi-mysql:3306/db_inventarios?createDatabaseIfNotExist=true&serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true
       - DB_USER=root
       - DB_PASS=root
       - API_PRODUCTOS_URL=http://ms-producto:8081
@@ -352,11 +190,9 @@ services:
     networks:
       - ms-net
     depends_on:
-      mi-mysql-inventario:
+      mi-mysql:
         condition: service_healthy
       eureka-server:
-        condition: service_started
-      ms-proveedor:
         condition: service_started
     deploy:
       resources:
@@ -365,25 +201,23 @@ services:
 
   ms-proveedor:
     build:
-      context: ./proveedores
+      context: ./proveedor
       dockerfile: Dockerfile
     container_name: ms-proveedor
     ports:
       - "8082:8082"
     environment:
       - SPRING_PROFILES_ACTIVE=prod
-      - DB_URL=jdbc:mysql://mi-mysql-servicios:3306/proveedor?createDatabaseIfNotExist=true&serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true
+      - DB_URL=jdbc:mysql://mi-mysql:3306/proveedor?createDatabaseIfNotExist=true&serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true
       - DB_USER=root
       - DB_PASS=root
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
     networks:
       - ms-net
     depends_on:
-      mi-mysql-proveedor:
+      mi-mysql:
         condition: service_healthy
       eureka-server:
-        condition: service_started
-      ms-catalogo:
         condition: service_started
     deploy:
       resources:
@@ -399,7 +233,7 @@ services:
       - "8083:8083"
     environment:
       - SPRING_PROFILES_ACTIVE=prod
-      - DB_URL=jdbc:mysql://mi-mysql-servicios:3306/catalogo?createDatabaseIfNotExist=true&serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true
+      - DB_URL=jdbc:mysql://mi-mysql:3306/catalogo?createDatabaseIfNotExist=true&serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true
       - DB_USER=root
       - DB_PASS=root
       - API_PRODUCTOS_URL=http://ms-producto:8081
@@ -407,11 +241,9 @@ services:
     networks:
       - ms-net
     depends_on:
-      mi-mysql-catalogo:
+      mi-mysql:
         condition: service_healthy
       eureka-server:
-        condition: service_started
-      ms-resena:
         condition: service_started
     deploy:
       resources:
@@ -427,7 +259,7 @@ services:
       - "8087:8087"
     environment:
       - SPRING_PROFILES_ACTIVE=prod
-      - DB_URL=jdbc:mysql://mi-mysql-servicios:3306/db_resenas?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      - DB_URL=jdbc:mysql://mi-mysql:3306/db_resenas?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
       - DB_USER=root
       - DB_PASS=root
       - API_CLIENTES_URL=http://ms-cliente:8086
@@ -438,11 +270,9 @@ services:
     networks:
       - ms-net
     depends_on:
-      mi-mysql-resena:
+      mi-mysql:
         condition: service_healthy
       eureka-server:
-        condition: service_started
-      ms-despacho:
         condition: service_started
     deploy:
       resources:
@@ -458,7 +288,7 @@ services:
       - "8089:8089"
     environment:
       - SPRING_PROFILES_ACTIVE=prod
-      - MYSQL_HOST=mi-mysql-servicios
+      - MYSQL_HOST=mi-mysql
       - MYSQL_DATABASE=db_despachos
       - MYSQL_USER=root
       - MYSQL_PASSWORD=root
@@ -468,7 +298,7 @@ services:
     networks:
       - ms-net
     depends_on:
-      mi-mysql-despacho:
+      mi-mysql:
         condition: service_healthy
       eureka-server:
         condition: service_started
@@ -492,20 +322,8 @@ services:
       - ms-net
     depends_on:
       - eureka-server
-      - ms-categoria
-      - ms-producto
-      - ms-cliente
-      - ms-pedido
-      - ms-pago
-      - ms-inventario
-      - ms-proveedor
-      - ms-catalogo
-      - ms-resena
-      - ms-despacho
     deploy:
       resources:
         limits:
           memory: 400M
 
-volumes:
-  mysql_data:

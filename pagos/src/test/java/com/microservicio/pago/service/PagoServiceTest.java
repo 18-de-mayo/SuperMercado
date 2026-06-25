@@ -24,6 +24,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
@@ -96,9 +97,8 @@ class PagoServiceTest {
 
         pedidoDTO = new PedidoResponseDTO();
         pedidoDTO.setId(10L);
-        pedidoDTO.setClienteId(3L);
-        pedidoDTO.setTotal(new BigDecimal("15990.50"));
-        pedidoDTO.setEstado("CONFIRMADO");
+        pedidoDTO.setIdCliente(3L);
+        pedidoDTO.setEstadoPedido("CONFIRMADO");
     }
 
     // ════════════════════════════════════════════════════════════════════════
@@ -115,7 +115,7 @@ class PagoServiceTest {
             // Given
             when(pagoRepository.existsByPedidoId(10L)).thenReturn(false);
             when(pedidoClient.obtenerPedidoPorId(10L)).thenReturn(pedidoDTO);
-            when(clienteClient.clienteEstaActivo(3L)).thenReturn(true);
+            when(clienteClient.clienteEstaActivo(3L)).thenReturn(Map.of("activo", true));
             when(pagoRepository.save(any(Pago.class))).thenAnswer(inv -> {
                 Pago p = inv.getArgument(0);
                 p.setId(1L);
@@ -157,7 +157,7 @@ class PagoServiceTest {
             // Given
             when(pagoRepository.existsByPedidoId(10L)).thenReturn(false);
             when(pedidoClient.obtenerPedidoPorId(10L)).thenReturn(pedidoDTO);
-            when(clienteClient.clienteEstaActivo(3L)).thenReturn(false);
+            when(clienteClient.clienteEstaActivo(3L)).thenReturn(Map.of("activo", false));
 
             // When / Then
             assertThatThrownBy(() -> pagoService.crearPago(requestDTO))
@@ -173,7 +173,7 @@ class PagoServiceTest {
             // Given
             when(pagoRepository.existsByPedidoId(anyLong())).thenReturn(false);
             when(pedidoClient.obtenerPedidoPorId(anyLong())).thenReturn(pedidoDTO);
-            when(clienteClient.clienteEstaActivo(anyLong())).thenReturn(true);
+            when(clienteClient.clienteEstaActivo(anyLong())).thenReturn(Map.of("activo", true));
             when(pagoRepository.save(any(Pago.class))).thenAnswer(inv -> {
                 Pago p = inv.getArgument(0);
                 p.setId(5L);
@@ -193,7 +193,7 @@ class PagoServiceTest {
             // Given
             when(pagoRepository.existsByPedidoId(anyLong())).thenReturn(false);
             when(pedidoClient.obtenerPedidoPorId(anyLong())).thenReturn(pedidoDTO);
-            when(clienteClient.clienteEstaActivo(anyLong())).thenReturn(true);
+            when(clienteClient.clienteEstaActivo(anyLong())).thenReturn(Map.of("activo", true));
             when(pagoRepository.save(any(Pago.class))).thenAnswer(inv -> {
                 Pago p = inv.getArgument(0);
                 p.setId(42L);

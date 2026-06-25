@@ -37,16 +37,16 @@ Proyecto semestral de la asignatura **DSY1103 - Desarrollo FullStack 1**. Sistem
 
 | Ruta | Destino |
 |------|---------|
-| `/api/v1/productos/**` | `lb://productos` |
-| `/api/v1/pedidos/**` | `lb://pedidos` |
-| `/api/v1/clientes/**` | `lb://clientes` |
-| `/api/inventarios/**` | `lb://inventarios` |
-| `/api/despachos/**` | `lb://despachos` |
-| `/api/v1/proveedores/**` | `lb://proveedores` |
-| `/api/v1/categorias/**` | `lb://categorias` |
-| `/api/v1/catalogo/**` | `lb://catalogo` |
-| `/api/v1/pagos/**` | `lb://pagos` |
-| `/api/v1/resenas/**` | `lb://reseñas` |
+| `/api/v1/categorias/**` | `lb://ms-categoria` |
+| `/api/v1/productos/**` | `lb://ms-producto` |
+| `/api/v1/clientes/**` | `lb://ms-cliente` |
+| `/api/v1/pedidos/**` | `lb://ms-pedido` |
+| `/api/v1/pagos/**` | `lb://ms-pago` |
+| `/api/v1/inventarios/**` | `lb://ms-inventario` |
+| `/api/v1/proveedores/**` | `lb://ms-proveedor` |
+| `/api/v1/catalogos/**` | `lb://ms-catalogo` |
+| `/api/v1/resenas/**` | `lb://ms-resena` |
+| `/api/v1/despachos/**` | `lb://ms-despacho` |
 
 ---
 

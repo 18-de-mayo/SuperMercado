@@ -114,7 +114,7 @@ class ResenaServiceTest {
         void givenDatosValidos_whenCrearResena_thenRetornaDTO() {
             when(clienteClient.obtenerClientePorId(1L)).thenReturn(new ClienteResumenDTO());
             when(productoClient.obtenerProductoPorId(2L)).thenReturn(new ProductoResumenDTO());
-            when(pedidoClient.obtenerPedidoPorId(3L)).thenReturn(new Object());
+            when(pedidoClient.obtenerPedidoPorId(3L)).thenReturn(new PedidoResumenDTO());
             when(resenaRepository.findByClienteIdAndProductoIdAndPedidoId(1L, 2L, 3L)).thenReturn(Optional.empty());
             when(resenaRepository.save(any(Resena.class))).thenReturn(resenaPendiente);
 
@@ -129,7 +129,7 @@ class ResenaServiceTest {
         void givenResenaDuplicada_whenCrearResena_thenLanzaDuplicateResourceException() {
             when(clienteClient.obtenerClientePorId(1L)).thenReturn(new ClienteResumenDTO());
             when(productoClient.obtenerProductoPorId(2L)).thenReturn(new ProductoResumenDTO());
-            when(pedidoClient.obtenerPedidoPorId(3L)).thenReturn(new Object());
+            when(pedidoClient.obtenerPedidoPorId(3L)).thenReturn(new PedidoResumenDTO());
             when(resenaRepository.findByClienteIdAndProductoIdAndPedidoId(1L, 2L, 3L)).thenReturn(Optional.of(resenaPendiente));
 
             assertThatThrownBy(() -> service.crearResena(request))
@@ -498,7 +498,7 @@ class ResenaServiceTest {
         void givenClienteId_whenObtenerResumenCliente_thenRetornaResumenCompleto() {
             when(resenaRepository.findByClienteId(1L)).thenReturn(List.of(resenaPendiente, resenaAprobada));
             when(clienteClient.obtenerClientePorId(1L)).thenReturn(new ClienteResumenDTO());
-            when(pagoClient.obtenerPagosPorCliente(1L)).thenReturn(new Object());
+            when(pagoClient.obtenerPagosPorCliente(1L)).thenReturn(List.of(new PagoResumenDTO()));
 
             Map<String, Object> resultado = service.obtenerResumenCliente(1L);
 
@@ -513,7 +513,7 @@ class ResenaServiceTest {
         void givenClienteServiceFalla_whenObtenerResumenCliente_thenRetornaConMensaje() {
             when(resenaRepository.findByClienteId(1L)).thenReturn(List.of(resenaPendiente));
             when(clienteClient.obtenerClientePorId(1L)).thenThrow(new RuntimeException("timeout"));
-            when(pagoClient.obtenerPagosPorCliente(1L)).thenReturn(new Object());
+            when(pagoClient.obtenerPagosPorCliente(1L)).thenReturn(List.of(new PagoResumenDTO()));
 
             Map<String, Object> resultado = service.obtenerResumenCliente(1L);
 
@@ -569,7 +569,7 @@ class ResenaServiceTest {
         void givenErrorInesperado_whenCrearResena_thenLanzaRuntimeException() {
             when(clienteClient.obtenerClientePorId(1L)).thenReturn(new ClienteResumenDTO());
             when(productoClient.obtenerProductoPorId(2L)).thenReturn(new ProductoResumenDTO());
-            when(pedidoClient.obtenerPedidoPorId(3L)).thenReturn(new Object());
+            when(pedidoClient.obtenerPedidoPorId(3L)).thenReturn(new PedidoResumenDTO());
             when(resenaRepository.findByClienteIdAndProductoIdAndPedidoId(1L, 2L, 3L)).thenReturn(Optional.empty());
             when(resenaRepository.save(any(Resena.class))).thenThrow(new RuntimeException("DB error"));
 

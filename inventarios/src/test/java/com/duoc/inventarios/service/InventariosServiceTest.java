@@ -58,7 +58,7 @@ class InventariosServiceTest {
         entity.setStockMinimo(10);
 
         savedEntity = new Inventarios();
-        savedEntity.setId(1);
+        savedEntity.setId(1L);
         savedEntity.setProductoId(1L);
         savedEntity.setStockDisponible(50);
         savedEntity.setStockMinimo(10);
@@ -132,9 +132,9 @@ class InventariosServiceTest {
         @Test
         @DisplayName("buscarInventarioPorId retorna DTO cuando el inventario existe")
         void buscarInventarioPorId_encontrado() {
-            given(inventariosRepository.findById(1)).willReturn(Optional.of(savedEntity));
+            given(inventariosRepository.findById(1L)).willReturn(Optional.of(savedEntity));
 
-            InventarioDTO result = inventariosService.buscarInventarioPorId(1);
+            InventarioDTO result = inventariosService.buscarInventarioPorId(1L);
 
             assertThat(result).isNotNull();
             assertThat(result.getId()).isEqualTo(1);
@@ -144,9 +144,9 @@ class InventariosServiceTest {
         @Test
         @DisplayName("buscarInventarioPorId lanza InventarioNotFoundException cuando no existe")
         void buscarInventarioPorId_noEncontrado() {
-            given(inventariosRepository.findById(99)).willReturn(Optional.empty());
+            given(inventariosRepository.findById(99L)).willReturn(Optional.empty());
 
-            assertThatThrownBy(() -> inventariosService.buscarInventarioPorId(99))
+            assertThatThrownBy(() -> inventariosService.buscarInventarioPorId(99L))
                     .isInstanceOf(InventarioNotFoundException.class);
         }
     }
@@ -159,10 +159,10 @@ class InventariosServiceTest {
         @DisplayName("actualizarInventario exitoso — actualiza y retorna DTO actualizado")
         void actualizarInventario_exitoso() {
             given(productoClient.obtenerProductoPorId(1L)).willReturn(new ProductoDTO());
-            given(inventariosRepository.findById(1)).willReturn(Optional.of(entity));
+            given(inventariosRepository.findById(1L)).willReturn(Optional.of(entity));
             given(inventariosRepository.save(any(Inventarios.class))).willReturn(savedEntity);
 
-            InventarioDTO result = inventariosService.actualizarInventario(1, request);
+            InventarioDTO result = inventariosService.actualizarInventario(1L, request);
 
             assertThat(result).isNotNull();
             assertThat(result.getId()).isEqualTo(1);
@@ -174,9 +174,9 @@ class InventariosServiceTest {
         @DisplayName("actualizarInventario lanza InventarioNotFoundException cuando el inventario no existe")
         void actualizarInventario_noEncontrado() {
             given(productoClient.obtenerProductoPorId(1L)).willReturn(new ProductoDTO());
-            given(inventariosRepository.findById(1)).willReturn(Optional.empty());
+            given(inventariosRepository.findById(1L)).willReturn(Optional.empty());
 
-            assertThatThrownBy(() -> inventariosService.actualizarInventario(1, request))
+            assertThatThrownBy(() -> inventariosService.actualizarInventario(1L, request))
                     .isInstanceOf(InventarioNotFoundException.class);
         }
 
@@ -185,7 +185,7 @@ class InventariosServiceTest {
         void actualizarInventario_productoNoEncontrado() {
             given(productoClient.obtenerProductoPorId(1L)).willThrow(new RuntimeException("Feign error"));
 
-            assertThatThrownBy(() -> inventariosService.actualizarInventario(1, request))
+            assertThatThrownBy(() -> inventariosService.actualizarInventario(1L, request))
                     .isInstanceOf(ProductoNotFoundException.class);
         }
     }
@@ -197,19 +197,19 @@ class InventariosServiceTest {
         @Test
         @DisplayName("eliminarInventario elimina cuando el inventario existe")
         void eliminarInventario_exitoso() {
-            given(inventariosRepository.findById(1)).willReturn(Optional.of(savedEntity));
+            given(inventariosRepository.findById(1L)).willReturn(Optional.of(savedEntity));
 
-            inventariosService.eliminarInventario(1);
+            inventariosService.eliminarInventario(1L);
 
-            then(inventariosRepository).should().deleteById(1);
+            then(inventariosRepository).should().deleteById(1L);
         }
 
         @Test
         @DisplayName("eliminarInventario lanza InventarioNotFoundException cuando no existe")
         void eliminarInventario_noEncontrado() {
-            given(inventariosRepository.findById(99)).willReturn(Optional.empty());
+            given(inventariosRepository.findById(99L)).willReturn(Optional.empty());
 
-            assertThatThrownBy(() -> inventariosService.eliminarInventario(99))
+            assertThatThrownBy(() -> inventariosService.eliminarInventario(99L))
                     .isInstanceOf(InventarioNotFoundException.class);
 
             then(inventariosRepository).should(never()).deleteById(any());

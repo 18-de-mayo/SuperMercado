@@ -4,6 +4,13 @@ spring:
   application:
     name: ms-inventario
 
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
+    path: /doc/swagger-ui.html
+
 ---
 spring:
   config:
@@ -45,13 +52,6 @@ eureka:
 api:
   productos:
     url: http://localhost:8081
-
-springdoc:
-  api-docs:
-    enabled: true
-  swagger-ui:
-    enabled: true
-    path: /doc/swagger-ui.html
 
 logging:
   level:

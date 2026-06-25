@@ -55,9 +55,9 @@ spring:
                 methods: GET
 
         - id: ms-cliente
-          uri: lb://cliente-service
+          uri: lb://ms-cliente
           predicates:
-            - Path=/api/clientes/**
+            - Path=/api/v1/clientes/**
           filters:
             - name: CircuitBreaker
               args:
@@ -70,7 +70,7 @@ spring:
                 methods: GET
 
         - id: ms-pedido
-          uri: lb://pedidos
+          uri: lb://ms-pedido
           predicates:
             - Path=/api/v1/pedidos/**
           filters:
@@ -85,9 +85,9 @@ spring:
                 methods: GET
 
         - id: ms-pago
-          uri: lb://pago-service
+          uri: lb://ms-pago
           predicates:
-            - Path=/api/pagos/**
+            - Path=/api/v1/pagos/**
           filters:
             - name: CircuitBreaker
               args:
@@ -117,7 +117,7 @@ spring:
         - id: ms-proveedor
           uri: lb://ms-proveedor
           predicates:
-            - Path=/api/v1/proveedor/**
+            - Path=/api/v1/proveedores/**
           filters:
             - name: CircuitBreaker
               args:
@@ -162,7 +162,7 @@ spring:
         - id: ms-despacho
           uri: lb://ms-despacho
           predicates:
-            - Path=/api/v1/despacho/**
+            - Path=/api/v1/despachos/**
           filters:
             - name: CircuitBreaker
               args:
@@ -283,9 +283,9 @@ spring:
                 methods: GET
 
         - id: ms-cliente
-          uri: lb://cliente-service
+          uri: lb://ms-cliente
           predicates:
-            - Path=/api/clientes/**
+            - Path=/api/v1/clientes/**
           filters:
             - name: CircuitBreaker
               args:
@@ -298,7 +298,7 @@ spring:
                 methods: GET
 
         - id: ms-pedido
-          uri: lb://pedidos
+          uri: lb://ms-pedido
           predicates:
             - Path=/api/v1/pedidos/**
           filters:
@@ -313,9 +313,9 @@ spring:
                 methods: GET
 
         - id: ms-pago
-          uri: lb://pago-service
+          uri: lb://ms-pago
           predicates:
-            - Path=/api/pagos/**
+            - Path=/api/v1/pagos/**
           filters:
             - name: CircuitBreaker
               args:
@@ -345,7 +345,7 @@ spring:
         - id: ms-proveedor
           uri: lb://ms-proveedor
           predicates:
-            - Path=/api/v1/proveedor/**
+            - Path=/api/v1/proveedores/**
           filters:
             - name: CircuitBreaker
               args:
@@ -390,7 +390,7 @@ spring:
         - id: ms-despacho
           uri: lb://ms-despacho
           predicates:
-            - Path=/api/v1/despacho/**
+            - Path=/api/v1/despachos/**
           filters:
             - name: CircuitBreaker
               args:

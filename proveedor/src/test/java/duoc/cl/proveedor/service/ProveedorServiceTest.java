@@ -18,7 +18,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -62,9 +62,9 @@ class ProveedorServiceTest {
 
         ProveedorDTO resultado = service.guardar(request);
 
-        assertNotNull(resultado);
-        assertEquals(1L, resultado.getId());
-        assertEquals("76.123.456-7", resultado.getRut());
+        assertThat(resultado).isNotNull();
+        assertThat(resultado.getId()).isEqualTo(1L);
+        assertThat(resultado.getRut()).isEqualTo("76.123.456-7");
         verify(repository, times(1)).save(any(Proveedor.class));
     }
 
@@ -73,12 +73,10 @@ class ProveedorServiceTest {
     void debeLanzarExcepcionCuandoCorreoDuplicado() {
         when(repository.existsByCorreo(request.getCorreo())).thenReturn(true);
 
-        ResponseStatusException excepcion = assertThrows(ResponseStatusException.class,
-                () -> service.guardar(request)
-        );
-
-        assertEquals(HttpStatus.BAD_REQUEST, excepcion.getStatusCode());
-        assertEquals("El correo ya fue ingresado", excepcion.getReason());
+        assertThatThrownBy(() -> service.guardar(request))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasFieldOrPropertyWithValue("status", HttpStatus.BAD_REQUEST)
+                .hasMessageContaining("El correo ya fue ingresado");
         verify(repository, never()).save(any(Proveedor.class));
     }
 
@@ -88,12 +86,10 @@ class ProveedorServiceTest {
         when(repository.existsByCorreo(request.getCorreo())).thenReturn(false);
         when(repository.existsByRut(request.getRut())).thenReturn(true);
 
-        ResponseStatusException excepcion = assertThrows(ResponseStatusException.class,
-                () -> service.guardar(request)
-        );
-
-        assertEquals(HttpStatus.BAD_REQUEST, excepcion.getStatusCode());
-        assertEquals("El rut ya existe", excepcion.getReason());
+        assertThatThrownBy(() -> service.guardar(request))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasFieldOrPropertyWithValue("status", HttpStatus.BAD_REQUEST)
+                .hasMessageContaining("El rut ya existe");
         verify(repository, never()).save(any(Proveedor.class));
     }
 
@@ -104,10 +100,8 @@ class ProveedorServiceTest {
 
         List<ProveedorDTO> resultado = service.listar();
 
-        assertNotNull(resultado);
-        assertFalse(resultado.isEmpty());
-        assertEquals(1, resultado.size());
-        assertEquals("Distribuidora Tech", resultado.getFirst().getNombre());
+        assertThat(resultado).isNotEmpty().hasSize(1);
+        assertThat(resultado.getFirst().getNombre()).isEqualTo("Distribuidora Tech");
     }
 
     @Test
@@ -117,9 +111,9 @@ class ProveedorServiceTest {
 
         ProveedorDTO resultado = service.buscar(1L);
 
-        assertNotNull(resultado);
-        assertEquals(1L, resultado.getId());
-        assertEquals("contacto@tech.cl", resultado.getCorreo());
+        assertThat(resultado).isNotNull();
+        assertThat(resultado.getId()).isEqualTo(1L);
+        assertThat(resultado.getCorreo()).isEqualTo("contacto@tech.cl");
     }
 
     @Test
@@ -127,7 +121,7 @@ class ProveedorServiceTest {
     void debeLanzarExcepcionSiIdNoExiste() {
         when(repository.findById(99L)).thenReturn(Optional.empty());
 
-        assertThrows(ProveedorNotFoundException.class, () -> service.buscar(99L));
+        assertThatThrownBy(() -> service.buscar(99L)).isInstanceOf(ProveedorNotFoundException.class);
     }
 
     @Test
@@ -139,8 +133,56 @@ class ProveedorServiceTest {
         request.setNombre("Tech Corp");
         ProveedorDTO resultado = service.actualizar(1L, request);
 
-        assertNotNull(resultado);
-        assertEquals("Tech Corp", resultado.getNombre());
+        assertThat(resultado).isNotNull();
+        assertThat(resultado.getNombre()).isEqualTo("Tech Corp");
+    }
+
+    @Test
+    @DisplayName("actualizar: lanza NotFoundException si el ID no existe")
+    void debeLanzarExcepcionCuandoProveedorAActualizarNoExiste() {
+        when(repository.findById(999L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.actualizar(999L, request))
+                .isInstanceOf(ProveedorNotFoundException.class);
+        verify(repository, never()).save(any(Proveedor.class));
+    }
+
+    @Test
+    @DisplayName("actualizar: lanza BAD_REQUEST cuando el RUT nuevo ya está registrado por otro proveedor")
+    void debeLanzarExcepcionCuandoRutYaExisteAlActualizar() {
+        Proveedor proveedorOriginal = new Proveedor();
+        proveedorOriginal.setId(1L);
+        proveedorOriginal.setRut("76.123.456-7");
+        proveedorOriginal.setCorreo("contacto@tech.cl");
+
+        request.setRut("11.111.111-1");
+        when(repository.findById(1L)).thenReturn(Optional.of(proveedorOriginal));
+        when(repository.existsByRut(request.getRut())).thenReturn(true);
+
+        assertThatThrownBy(() -> service.actualizar(1L, request))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasFieldOrPropertyWithValue("status", HttpStatus.BAD_REQUEST)
+                .hasMessageContaining("RUT ingresado ya está registrado");
+        verify(repository, never()).save(any(Proveedor.class));
+    }
+
+    @Test
+    @DisplayName("actualizar: lanza BAD_REQUEST cuando el correo nuevo ya está registrado por otro proveedor")
+    void debeLanzarExcepcionCuandoCorreoYaExisteAlActualizar() {
+        Proveedor proveedorOriginal = new Proveedor();
+        proveedorOriginal.setId(1L);
+        proveedorOriginal.setRut("76.123.456-7");
+        proveedorOriginal.setCorreo("contacto@tech.cl");
+
+        request.setCorreo("otro@correo.cl");
+        when(repository.findById(1L)).thenReturn(Optional.of(proveedorOriginal));
+        when(repository.existsByCorreo(request.getCorreo())).thenReturn(true);
+
+        assertThatThrownBy(() -> service.actualizar(1L, request))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasFieldOrPropertyWithValue("status", HttpStatus.BAD_REQUEST)
+                .hasMessageContaining("correo ingresado ya está registrado");
+        verify(repository, never()).save(any(Proveedor.class));
     }
 
     @Test
@@ -149,7 +191,17 @@ class ProveedorServiceTest {
         when(repository.findById(1L)).thenReturn(Optional.of(proveedorGuardado));
         doNothing().when(repository).delete(proveedorGuardado);
 
-        assertDoesNotThrow(() -> service.eliminar(1L));
+        assertThatNoException().isThrownBy(() -> service.eliminar(1L));
         verify(repository, times(1)).delete(proveedorGuardado);
+    }
+
+    @Test
+    @DisplayName("eliminar: lanza NotFoundException si el ID no existe")
+    void debeLanzarExcepcionAlEliminarProveedorInexistente() {
+        when(repository.findById(999L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.eliminar(999L))
+                .isInstanceOf(ProveedorNotFoundException.class);
+        verify(repository, never()).delete(any(Proveedor.class));
     }
 }

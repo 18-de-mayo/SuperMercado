@@ -5,6 +5,7 @@ import duoc.cl.productos.dto.ProductoDTO;
 import duoc.cl.productos.dto.ProductoRequest;
 import duoc.cl.productos.exception.ProductoDuplicadoException;
 import duoc.cl.productos.service.ProductoService;
+import java.math.BigDecimal;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -39,11 +40,11 @@ class ProductoControllerTest {
     void setUp() {
         requestValido = new ProductoRequest();
         requestValido.setNombre("Teclado Mecánico");
-        requestValido.setPrecio(45000.0);
+        requestValido.setPrecio(BigDecimal.valueOf(45000));
         requestValido.setCantidad(20);
         requestValido.setProveedorId(1L);
         requestValido.setDescripcion("Teclado mecánico retroiluminado RGB switches rojos");
-        requestValido.setCategoria("Periféricos");
+        requestValido.setCategoriaId(1L);
 
         dtoRetornado = new ProductoDTO();
         dtoRetornado.setId(10L);

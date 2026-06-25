@@ -4,8 +4,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
-
 /**
  * DTO local que refleja la respuesta del microservicio de pedidos.
  * Solo contiene los campos que el microservicio de pagos necesita.
@@ -16,7 +14,6 @@ import java.math.BigDecimal;
 public class PedidoResponseDTO {
 
     private Long id;
-    private Long clienteId;
-    private BigDecimal total;
-    private String estado;
+    private Long idCliente;
+    private String estadoPedido;
 }

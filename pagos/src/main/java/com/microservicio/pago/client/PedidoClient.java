@@ -19,6 +19,6 @@ public interface PedidoClient {
      * @param id identificador del pedido
      * @return DTO con los datos del pedido (incluye clienteId y total)
      */
-    @GetMapping("/api/pedidos/{id}")
+    @GetMapping("/api/v1/pedidos/{id}")
     PedidoResponseDTO obtenerPedidoPorId(@PathVariable("id") Long id);
 }

@@ -1,4 +1,4 @@
-package duoc.cl.catalogo.feign;
+package duoc.cl.catalogo.client;
 
 import duoc.cl.catalogo.dto.ProductoDTO;
 

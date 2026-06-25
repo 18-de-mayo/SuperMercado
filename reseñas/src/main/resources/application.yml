@@ -4,6 +4,12 @@ spring:
   application:
     name: ms-resena
 
+springdoc:
+  api-docs:
+    path: /api/v1/resenas-docs
+  swagger-ui:
+    path: /api/v1/resenas-swagger
+
 ---
 spring:
   config:

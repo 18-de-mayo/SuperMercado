@@ -9,12 +9,14 @@ import java.time.LocalDateTime;
 // DTO de entrada — valida los datos al crear o actualizar un inventario
 @Data
 @Schema(description = "Solicitud para crear o actualizar un registro de inventario")
-public class InventariosRequest {
+public class InventarioRequest {
 
+    @Schema(description = "ID del producto en el catálogo maestro", example = "100")
     @NotNull(message = "El id del producto no puede ser nulo")
     @Positive(message = "El id del producto debe ser mayor a cero")
     private Long productoId;        // corregido a Long para coincidir con MS producto
 
+    @Schema(description = "Nueva cantidad en inventario", example = "50")
     @NotNull(message = "El stock disponible no puede ser nulo")
     @Positive(message = "El stock disponible debe ser mayor a cero")
     private Integer stockDisponible;

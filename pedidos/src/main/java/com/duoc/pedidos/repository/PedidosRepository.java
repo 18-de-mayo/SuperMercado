@@ -8,6 +8,6 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface PedidosRepository extends JpaRepository<Pedidos, Integer> {
-    List<Pedidos> findByIdCliente(Integer idCliente);
+public interface PedidosRepository extends JpaRepository<Pedidos, Long> {
+    List<Pedidos> findByIdCliente(Long idCliente);
 }

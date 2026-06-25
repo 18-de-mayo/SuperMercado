@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -75,6 +76,14 @@ public class GlobalExceptionHandler {
         String mensaje = "Error de comunicación con microservicio remoto. Intente más tarde.";
         log.error("[PAGO] Error Feign (status {}): {}", ex.status(), ex.getMessage());
         return buildResponse(HttpStatus.SERVICE_UNAVAILABLE, mensaje);
+    }
+
+    // ── Formato de petición inválido ─────────────────────────────────────────
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<Map<String, Object>> handleNotReadable(HttpMessageNotReadableException ex) {
+        log.warn("[PAGO] Formato de peticion invalido: {}", ex.getMessage());
+        return buildResponse(HttpStatus.BAD_REQUEST, "Formato de petición inválido. Verifique los tipos de datos enviados.");
     }
 
     // ── Error genérico ──────────────────────────────────────────────────────

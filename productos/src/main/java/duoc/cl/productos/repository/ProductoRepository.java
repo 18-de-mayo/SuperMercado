@@ -19,4 +19,7 @@ public interface ProductoRepository
 
     // buscar por nombre
     List<Producto> findByNombreContainingIgnoreCase(String nombre);
+
+    // filtrar por categoría
+    List<Producto> findByCategoriaId(Long categoriaId);
 }

@@ -3,7 +3,7 @@ package duoc.cl.catalogo.service;
 import duoc.cl.catalogo.dto.CampanaDTO;
 import duoc.cl.catalogo.dto.CatalogoItemDTO;
 import duoc.cl.catalogo.dto.ProductoDTO;
-import duoc.cl.catalogo.feign.ProductoFeignClient;
+import duoc.cl.catalogo.client.ProductoFeignClient;
 import duoc.cl.catalogo.model.CatalogoCampana;
 import duoc.cl.catalogo.model.CatalogoItem;
 import duoc.cl.catalogo.repository.CatalogoCampanaRepository;
@@ -304,7 +304,141 @@ class CatalogoServiceTest {
     }
 
     // ════════════════════════════════════════════════════════
-    // BLOQUE 5: MAPEO mapToCampanaDTO (items null)
+    // BLOQUE 5: LISTAR CAMPAÑAS
+    // ════════════════════════════════════════════════════════
+
+    @Nested
+    @DisplayName("listarCampanas()")
+    class ListarCampanasTests {
+
+        @Test
+        @DisplayName("Debe retornar lista de campañas cuando existen")
+        void listarCampanas_campanasExisten_retornaLista() {
+            when(campanaRepository.findAll()).thenReturn(List.of(campanaVerano));
+
+            var resultado = catalogoService.listarCampanas();
+
+            assertThat(resultado).hasSize(1);
+            assertThat(resultado.get(0).getNombreCampana()).isEqualTo("Verano 2026");
+            verify(campanaRepository, times(1)).findAll();
+        }
+
+        @Test
+        @DisplayName("Debe retornar lista vacía cuando no hay campañas")
+        void listarCampanas_sinCampanas_retornaListaVacia() {
+            when(campanaRepository.findAll()).thenReturn(List.of());
+
+            var resultado = catalogoService.listarCampanas();
+
+            assertThat(resultado).isEmpty();
+        }
+    }
+
+    // ════════════════════════════════════════════════════════
+    // BLOQUE 6: ACTUALIZAR CAMPAÑA
+    // ════════════════════════════════════════════════════════
+
+    @Nested
+    @DisplayName("actualizarCampana()")
+    class ActualizarCampanaTests {
+
+        @Test
+        @DisplayName("Debe actualizar el nombre de la campaña cuando el ID existe")
+        void actualizarCampana_idExiste_retornaCampanaDTO() {
+            when(campanaRepository.findById(1L)).thenReturn(Optional.of(campanaVerano));
+            CatalogoCampana campanaActualizada = new CatalogoCampana();
+            campanaActualizada.setId(1L);
+            campanaActualizada.setNombreCampana("Verano 2027");
+            when(campanaRepository.save(any(CatalogoCampana.class))).thenReturn(campanaActualizada);
+
+            var resultado = catalogoService.actualizarCampana(1L, "Verano 2027");
+
+            assertThat(resultado).isNotNull();
+            assertThat(resultado.getNombreCampana()).isEqualTo("Verano 2027");
+            verify(campanaRepository, times(1)).save(any(CatalogoCampana.class));
+        }
+
+        @Test
+        @DisplayName("Debe lanzar NOT_FOUND cuando la campaña a actualizar no existe")
+        void actualizarCampana_idNoExiste_lanzaNotFound() {
+            when(campanaRepository.findById(99L)).thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> catalogoService.actualizarCampana(99L, "Invierno"))
+                    .isInstanceOf(ResponseStatusException.class)
+                    .hasFieldOrPropertyWithValue("status", HttpStatus.NOT_FOUND);
+            verify(campanaRepository, never()).save(any());
+        }
+    }
+
+    // ════════════════════════════════════════════════════════
+    // BLOQUE 7: ELIMINAR CAMPAÑA
+    // ════════════════════════════════════════════════════════
+
+    @Nested
+    @DisplayName("eliminarCampana()")
+    class EliminarCampanaTests {
+
+        @Test
+        @DisplayName("Debe eliminar la campaña cuando el ID existe")
+        void eliminarCampana_idExiste_eliminaCorrectamente() {
+            when(campanaRepository.existsById(1L)).thenReturn(true);
+            doNothing().when(campanaRepository).deleteById(1L);
+
+            assertThatNoException().isThrownBy(() -> catalogoService.eliminarCampana(1L));
+            verify(campanaRepository, times(1)).deleteById(1L);
+        }
+
+        @Test
+        @DisplayName("Debe lanzar NOT_FOUND cuando la campaña a eliminar no existe")
+        void eliminarCampana_idNoExiste_lanzaNotFound() {
+            when(campanaRepository.existsById(99L)).thenReturn(false);
+
+            assertThatThrownBy(() -> catalogoService.eliminarCampana(99L))
+                    .isInstanceOf(ResponseStatusException.class)
+                    .hasFieldOrPropertyWithValue("status", HttpStatus.NOT_FOUND);
+            verify(campanaRepository, never()).deleteById(anyLong());
+        }
+    }
+
+    // ════════════════════════════════════════════════════════
+    // BLOQUE 8: AGREGAR PRODUCTO A CAMPAÑA - VALIDACIONES EXTRA
+    // ════════════════════════════════════════════════════════
+
+    @Nested
+    @DisplayName("agregarProductoACampana() - validaciones extras")
+    class AgregarProductoValidacionesTests {
+
+        @Test
+        @DisplayName("Debe lanzar CONFLICT cuando el producto ya existe en la campaña")
+        void agregarProductoACampana_productoDuplicado_lanzaConflict() {
+            when(campanaRepository.findById(1L)).thenReturn(Optional.of(campanaVerano));
+            when(productoFeignClient.buscarProducto(100L)).thenReturn(productoDisponible);
+            when(itemRepository.existsByCampanaIdAndProductoId(1L, 100L)).thenReturn(true);
+
+            assertThatThrownBy(() -> catalogoService.agregarProductoACampana(1L, 100L, BigDecimal.valueOf(1500), BigDecimal.valueOf(1200)))
+                    .isInstanceOf(ResponseStatusException.class)
+                    .hasFieldOrPropertyWithValue("status", HttpStatus.CONFLICT)
+                    .hasMessageContaining("ya existe en esta campaña");
+            verify(itemRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("Debe lanzar BAD_REQUEST cuando el precio de oferta supera al precio de catálogo")
+        void agregarProductoACampana_precioOfertaMayor_lanzaBadRequest() {
+            when(campanaRepository.findById(1L)).thenReturn(Optional.of(campanaVerano));
+            when(productoFeignClient.buscarProducto(100L)).thenReturn(productoDisponible);
+            when(itemRepository.existsByCampanaIdAndProductoId(1L, 100L)).thenReturn(false);
+
+            assertThatThrownBy(() -> catalogoService.agregarProductoACampana(1L, 100L, BigDecimal.valueOf(1000), BigDecimal.valueOf(2000)))
+                    .isInstanceOf(ResponseStatusException.class)
+                    .hasFieldOrPropertyWithValue("status", HttpStatus.BAD_REQUEST)
+                    .hasMessageContaining("precio de oferta no puede ser mayor");
+            verify(itemRepository, never()).save(any());
+        }
+    }
+
+    // ════════════════════════════════════════════════════════
+    // BLOQUE 9: MAPEO mapToCampanaDTO (items null)
     // ════════════════════════════════════════════════════════
 
     @Nested

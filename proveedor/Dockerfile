@@ -14,7 +14,7 @@ COPY src/ src/
 RUN ./mvnw clean package -DskipTests -q
 
 # ─── Etapa 2: Imagen final ────────────────────────────────────────────────────
-FROM eclipse-temurin:26-jre-alpine
+FROM eclipse-temurin:21-jre-alpine
 
 WORKDIR /app
 

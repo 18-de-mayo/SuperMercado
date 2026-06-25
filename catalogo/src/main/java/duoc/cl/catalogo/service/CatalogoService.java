@@ -3,11 +3,12 @@ package duoc.cl.catalogo.service;
 import duoc.cl.catalogo.dto.CampanaDTO;
 import duoc.cl.catalogo.dto.CatalogoItemDTO;
 import duoc.cl.catalogo.dto.ProductoDTO;
-import duoc.cl.catalogo.feign.ProductoFeignClient;
+import duoc.cl.catalogo.client.ProductoFeignClient;
 import duoc.cl.catalogo.model.CatalogoCampana;
 import duoc.cl.catalogo.model.CatalogoItem;
 import duoc.cl.catalogo.repository.CatalogoCampanaRepository;
-import duoc.cl.catalogo.repository.CatalogoItemRepository; // Importamos el repositorio de ítems
+import duoc.cl.catalogo.repository.CatalogoItemRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
@@ -17,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class CatalogoService {
 
@@ -61,6 +63,17 @@ public class CatalogoService {
             productoFeignClient.buscarProducto(productoId);
         } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El producto no existe en el catálogo maestro.");
+        }
+
+        // Validar que el producto no esté duplicado en la misma campaña
+        if (itemRepository.existsByCampanaIdAndProductoId(campanaId, productoId)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "El producto ya existe en esta campaña.");
+        }
+
+        // Validar que el precio de oferta no sea mayor al precio de catálogo
+        if (precioOf.compareTo(precioCat) > 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "El precio de oferta no puede ser mayor al precio de catálogo.");
         }
 
         // Creamos el ítem apuntando a su campaña padre

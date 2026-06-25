@@ -12,9 +12,10 @@ import com.microservicio.pago.model.Pago;
 import com.microservicio.pago.model.Pago.EstadoPago;
 import com.microservicio.pago.model.Pago.MetodoPago;
 import com.microservicio.pago.repository.PagoRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+
+import java.util.Map;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -33,11 +34,10 @@ import java.util.stream.Collectors;
  * 4. Solo se eliminan pagos en estado CANCELADO o FALLIDO.
  * 5. Al confirmar (COMPLETADO), se registra la fechaPago.
  */
+@Slf4j
 @Service
 @Transactional
 public class PagoServiceImpl implements PagoService {
-
-    private static final Logger log = LoggerFactory.getLogger(PagoServiceImpl.class);
 
     private final PagoRepository pagoRepository;
     private final PedidoClient pedidoClient;
@@ -65,21 +65,22 @@ public class PagoServiceImpl implements PagoService {
 
         // Validación remota: el pedido debe existir
         PedidoResponseDTO pedido = pedidoClient.obtenerPedidoPorId(dto.getPedidoId());
-        log.debug("[PAGO] Pedido obtenido: id={}, clienteId={}, total={}",
-                  pedido.getId(), pedido.getClienteId(), pedido.getTotal());
+        log.debug("[PAGO] Pedido obtenido: id={}, idCliente={}, estado={}",
+                  pedido.getId(), pedido.getIdCliente(), pedido.getEstadoPedido());
 
         // Validación remota: el cliente debe estar activo
-        Boolean clienteActivo = clienteClient.clienteEstaActivo(pedido.getClienteId());
+        Map<String, Boolean> respuestaCliente = clienteClient.clienteEstaActivo(pedido.getIdCliente());
+        Boolean clienteActivo = respuestaCliente.getOrDefault("activo", false);
         if (!Boolean.TRUE.equals(clienteActivo)) {
-            log.warn("[PAGO] Cliente {} no está activo, pago rechazado", pedido.getClienteId());
+            log.warn("[PAGO] Cliente {} no está activo, pago rechazado", pedido.getIdCliente());
             throw new EstadoPagoInvalidoException(
                     "No se puede crear el pago: el cliente con ID " +
-                    pedido.getClienteId() + " no está activo.");
+                    pedido.getIdCliente() + " no está activo.");
         }
 
         Pago pago = Pago.builder()
                 .pedidoId(dto.getPedidoId())
-                .clienteId(pedido.getClienteId())
+                .clienteId(pedido.getIdCliente())
                 .monto(dto.getMonto())
                 .metodoPago(dto.getMetodoPago())
                 .estado(EstadoPago.PENDIENTE)

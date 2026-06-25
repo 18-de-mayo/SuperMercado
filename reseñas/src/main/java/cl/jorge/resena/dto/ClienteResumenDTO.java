@@ -10,8 +10,10 @@ import lombok.Data;
 @Data
 @Schema(description = "DTO con resumen de cliente para reseñas")
 public class ClienteResumenDTO {
+    @Schema(description = "ID del cliente", example = "1")
     private Long id;
+    @Schema(description = "Nombre del cliente", example = "Juan Pérez")
     private String nombre;
+    @Schema(description = "RUT del cliente", example = "12345678-9")
     private String rut;
-    private Double nivel;
 }

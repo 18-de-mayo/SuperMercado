@@ -6,6 +6,7 @@ import duoc.cl.proveedor.exception.ProveedorNotFoundException;
 import duoc.cl.proveedor.model.Proveedor;
 import duoc.cl.proveedor.repository.ProveedorRepository;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -13,6 +14,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class ProveedorService {
 

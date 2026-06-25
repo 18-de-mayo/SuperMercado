@@ -4,6 +4,7 @@ import cl.jorge.resena.client.ClienteClient;
 import cl.jorge.resena.client.PagoClient;
 import cl.jorge.resena.client.PedidoClient;
 import cl.jorge.resena.client.ProductoClient;
+import cl.jorge.resena.dto.PagoResumenDTO;
 import cl.jorge.resena.dto.*;
 import cl.jorge.resena.exception.DuplicateResourceException;
 import cl.jorge.resena.exception.EstadoInvalidoException;
@@ -295,7 +296,7 @@ public class ResenaService {
         }
 
         try {
-            Object pagos = pagoClient.obtenerPagosPorCliente(clienteId);
+            List<PagoResumenDTO> pagos = pagoClient.obtenerPagosPorCliente(clienteId);
             resumen.put("pagos", pagos);
         } catch (Exception e) {
             log.error("[SERVICE] Error al comunicar con pago-service: {}", e.getMessage());

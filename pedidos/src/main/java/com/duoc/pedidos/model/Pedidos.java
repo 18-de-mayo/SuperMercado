@@ -18,10 +18,10 @@ public class Pedidos {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    private Long id;
 
-    @Column(name = "id_cliente")
-    private Integer idCliente;
+    @Column(name = "id_cliente", nullable = false)
+    private Long idCliente;
 
     @Column(name = "fecha_pedido", nullable = false)
     private LocalDateTime fechaPedido;

@@ -9,7 +9,7 @@ import static org.mockito.Mockito.never;
 
 import com.duoc.inventarios.client.ProductoClient;
 import com.duoc.inventarios.dto.InventarioDTO;
-import com.duoc.inventarios.dto.InventariosRequest;
+import com.duoc.inventarios.dto.InventarioRequest;
 import com.duoc.inventarios.dto.ProductoDTO;
 import com.duoc.inventarios.exception.InventarioNotFoundException;
 import com.duoc.inventarios.exception.ProductoNotFoundException;
@@ -41,13 +41,13 @@ class InventariosServiceTest {
     @InjectMocks
     private InventariosService inventariosService;
 
-    private InventariosRequest request;
+    private InventarioRequest request;
     private Inventarios entity;
     private Inventarios savedEntity;
 
     @BeforeEach
     void setUp() {
-        request = new InventariosRequest();
+        request = new InventarioRequest();
         request.setProductoId(1L);
         request.setStockDisponible(50);
         request.setStockMinimo(10);

@@ -1,5 +1,6 @@
 package cl.jorge.resena.client;
 
+import cl.jorge.resena.dto.PagoResumenDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -16,8 +17,7 @@ public interface PagoClient {
 
     /**
      * Obtiene los pagos asociados a un cliente.
-     * Retorna Object genérico para evitar acoplamiento con entidades externas.
      */
-    @GetMapping("/api/v1/pagos/clientes/{clienteId}")
-    Object obtenerPagosPorCliente(@PathVariable("clienteId") Long clienteId);
+    @GetMapping("/api/v1/pagos/cliente/{clienteId}")
+    List<PagoResumenDTO> obtenerPagosPorCliente(@PathVariable("clienteId") Long clienteId);
 }

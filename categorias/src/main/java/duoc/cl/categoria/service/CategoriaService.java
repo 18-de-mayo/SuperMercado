@@ -6,11 +6,13 @@ import duoc.cl.categoria.exception.CategoriaNotFoundException;
 import duoc.cl.categoria.model.CategoriaModel;
 import duoc.cl.categoria.repository.CategoriaRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class CategoriaService {
@@ -20,23 +22,26 @@ public class CategoriaService {
     // ── CREATE ──────────────────────────────────────────────────────
     @Transactional
     public CategoriaDTO guardar(CategoriaRequest request) {
+        log.info("Guardando nueva categoría: {}", request.getNombre());
         repository.findByNombreIgnoreCase(request.getNombre()).ifPresent(c -> {
+            log.warn("Intento de crear categoría duplicada: {}", request.getNombre());
             throw new IllegalArgumentException("Ya existe una categoría con el nombre: " + request.getNombre());
         });
 
-        // Optimización: Uso limpio del patrón de diseño Builder
         CategoriaModel categoriaModel = CategoriaModel.builder()
                 .nombre(request.getNombre())
                 .descripcion(request.getDescripcion())
                 .build();
 
-        return mapToDTO(repository.save(categoriaModel));
+        CategoriaDTO guardada = mapToDTO(repository.save(categoriaModel));
+        log.info("Categoría guardada exitosamente con ID: {}", guardada.getId());
+        return guardada;
     }
 
     // ── READ ─────────────────────────────────────────────────────────
     @Transactional(readOnly = true)
     public List<CategoriaDTO> listar() {
-        // Optimización Java 21: Reemplazo de Collectors.toList() por el .toList() nativo
+        log.info("Listando todas las categorías");
         return repository.findAll().stream()
                 .map(this::mapToDTO)
                 .toList();
@@ -44,6 +49,7 @@ public class CategoriaService {
 
     @Transactional(readOnly = true)
     public CategoriaDTO buscarPorId(Long id) {
+        log.info("Buscando categoría por ID: {}", id);
         return repository.findById(id)
                 .map(this::mapToDTO)
                 .orElseThrow(() -> new CategoriaNotFoundException(id));
@@ -52,27 +58,33 @@ public class CategoriaService {
     // ── UPDATE ───────────────────────────────────────────────────────
     @Transactional
     public CategoriaDTO actualizar(Long id, CategoriaRequest request) {
+        log.info("Actualizando categoría ID: {}", id);
         CategoriaModel existente = repository.findById(id)
                 .orElseThrow(() -> new CategoriaNotFoundException(id));
 
         repository.findByNombreIgnoreCase(request.getNombre()).ifPresent(categoriaEncontrada -> {
             if (!categoriaEncontrada.getId().equals(id)) {
+                log.warn("Intento de actualizar a nombre duplicado: {}", request.getNombre());
                 throw new IllegalArgumentException("Ya existe otra categoría con el nombre: " + request.getNombre());
             }
         });
 
         existente.setNombre(request.getNombre());
         existente.setDescripcion(request.getDescripcion());
-        return mapToDTO(repository.save(existente));
+        CategoriaDTO actualizada = mapToDTO(repository.save(existente));
+        log.info("Categoría ID {} actualizada exitosamente", id);
+        return actualizada;
     }
 
     // ── DELETE ───────────────────────────────────────────────────────
     @Transactional
     public void eliminar(Long id) {
+        log.info("Eliminando categoría ID: {}", id);
         if (!repository.existsById(id)) {
             throw new CategoriaNotFoundException(id);
         }
         repository.deleteById(id);
+        log.info("Categoría ID {} eliminada exitosamente", id);
     }
 
     // ── MAPEO ────────────────────────────────────────────────────────

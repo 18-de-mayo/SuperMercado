@@ -14,8 +14,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,12 +28,12 @@ import java.util.List;
  * Controlador REST para la gestión de pagos del supermercado.
  * Expone endpoints CRUD y operaciones de negocio sobre los pagos.
  */
+@Slf4j
 @RestController
-@RequestMapping("/api/pagos")
+@RequestMapping("/api/v1/pagos")
 @Tag(name = "Pagos", description = "API para la gestión de pagos del supermercado")
 public class PagoController {
 
-    private static final Logger log = LoggerFactory.getLogger(PagoController.class);
     private final PagoService pagoService;
 
     public PagoController(PagoService pagoService) {
@@ -54,7 +53,7 @@ public class PagoController {
             @ApiResponse(responseCode = "422", description = "Cliente inactivo, pago no permitido")
     })
     public ResponseEntity<PagoResponseDTO> crearPago(@Valid @RequestBody PagoRequestDTO dto) {
-        log.info("[PAGO] POST /api/pagos - pedidoId={}", dto.getPedidoId());
+        log.info("[PAGO] POST /api/v1/pagos - pedidoId={}", dto.getPedidoId());
         PagoResponseDTO respuesta = pagoService.crearPago(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(respuesta);
     }
@@ -66,7 +65,7 @@ public class PagoController {
                description = "Retorna la lista completa de pagos registrados en el sistema.")
     @ApiResponse(responseCode = "200", description = "Lista de pagos retornada")
     public ResponseEntity<List<PagoResponseDTO>> listarTodos() {
-        log.info("[PAGO] GET /api/pagos - listando todos");
+        log.info("[PAGO] GET /api/v1/pagos - listando todos");
         return ResponseEntity.ok(pagoService.listarTodos());
     }
 
@@ -79,7 +78,7 @@ public class PagoController {
     })
     public ResponseEntity<PagoResponseDTO> obtenerPorId(
             @Parameter(description = "ID del pago", example = "1") @PathVariable Long id) {
-        log.info("[PAGO] GET /api/pagos/{}", id);
+        log.info("[PAGO] GET /api/v1/pagos/{}", id);
         return ResponseEntity.ok(pagoService.obtenerPorId(id));
     }
 
@@ -92,7 +91,7 @@ public class PagoController {
     })
     public ResponseEntity<PagoResponseDTO> obtenerPorPedidoId(
             @Parameter(description = "ID del pedido", example = "10") @PathVariable Long pedidoId) {
-        log.info("[PAGO] GET /api/pagos/pedido/{}", pedidoId);
+        log.info("[PAGO] GET /api/v1/pagos/pedido/{}", pedidoId);
         return ResponseEntity.ok(pagoService.obtenerPorPedidoId(pedidoId));
     }
 
@@ -106,7 +105,7 @@ public class PagoController {
     public ResponseEntity<PagoResponseDTO> obtenerPorRecibo(
             @Parameter(description = "Número de recibo", example = "REC-2025-000001")
             @PathVariable String numeroRecibo) {
-        log.info("[PAGO] GET /api/pagos/recibo/{}", numeroRecibo);
+        log.info("[PAGO] GET /api/v1/pagos/recibo/{}", numeroRecibo);
         return ResponseEntity.ok(pagoService.obtenerPorNumeroRecibo(numeroRecibo));
     }
 
@@ -116,7 +115,7 @@ public class PagoController {
     @ApiResponse(responseCode = "200", description = "Lista de pagos del cliente")
     public ResponseEntity<List<PagoResponseDTO>> listarPorCliente(
             @Parameter(description = "ID del cliente", example = "3") @PathVariable Long clienteId) {
-        log.info("[PAGO] GET /api/pagos/cliente/{}", clienteId);
+        log.info("[PAGO] GET /api/v1/pagos/cliente/{}", clienteId);
         return ResponseEntity.ok(pagoService.listarPorCliente(clienteId));
     }
 
@@ -127,7 +126,7 @@ public class PagoController {
     public ResponseEntity<List<PagoResponseDTO>> listarPorEstado(
             @Parameter(description = "Estado del pago", example = "COMPLETADO")
             @PathVariable EstadoPago estado) {
-        log.info("[PAGO] GET /api/pagos/estado/{}", estado);
+        log.info("[PAGO] GET /api/v1/pagos/estado/{}", estado);
         return ResponseEntity.ok(pagoService.listarPorEstado(estado));
     }
 
@@ -138,7 +137,7 @@ public class PagoController {
     public ResponseEntity<List<PagoResponseDTO>> listarPorMetodo(
             @Parameter(description = "Método de pago", example = "TARJETA_DEBITO")
             @PathVariable MetodoPago metodoPago) {
-        log.info("[PAGO] GET /api/pagos/metodo/{}", metodoPago);
+        log.info("[PAGO] GET /api/v1/pagos/metodo/{}", metodoPago);
         return ResponseEntity.ok(pagoService.listarPorMetodoPago(metodoPago));
     }
 
@@ -155,7 +154,7 @@ public class PagoController {
     public ResponseEntity<PagoResponseDTO> actualizarPago(
             @PathVariable Long id,
             @Valid @RequestBody PagoRequestDTO dto) {
-        log.info("[PAGO] PUT /api/pagos/{}", id);
+        log.info("[PAGO] PUT /api/v1/pagos/{}", id);
         return ResponseEntity.ok(pagoService.actualizarPago(id, dto));
     }
 
@@ -172,55 +171,13 @@ public class PagoController {
     public ResponseEntity<PagoResponseDTO> cambiarEstado(
             @PathVariable Long id,
             @Valid @RequestBody EstadoPagoRequestDTO dto) {
-        log.info("[PAGO] PATCH /api/pagos/{}/estado - nuevoEstado={}", id, dto.getNuevoEstado());
+        log.info("[PAGO] PATCH /api/v1/pagos/{}/estado - nuevoEstado={}", id, dto.getNuevoEstado());
         return ResponseEntity.ok(pagoService.cambiarEstado(id, dto.getNuevoEstado()));
-    }
-
-    @PatchMapping("/{id}/confirmar")
-    @Operation(summary = "Confirmar un pago",
-               description = "Marca el pago como COMPLETADO y registra la fecha de pago. Solo válido desde estado PENDIENTE.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Pago confirmado"),
-            @ApiResponse(responseCode = "422", description = "El pago no está en estado PENDIENTE")
-    })
-    public ResponseEntity<PagoResponseDTO> confirmarPago(@PathVariable Long id) {
-        log.info("[PAGO] PATCH /api/pagos/{}/confirmar", id);
-        return ResponseEntity.ok(pagoService.confirmarPago(id));
-    }
-
-    @PatchMapping("/{id}/cancelar")
-    @Operation(summary = "Cancelar un pago",
-               description = "Cancela un pago en estado PENDIENTE.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Pago cancelado"),
-            @ApiResponse(responseCode = "422", description = "El pago no está en estado PENDIENTE")
-    })
-    public ResponseEntity<PagoResponseDTO> cancelarPago(@PathVariable Long id) {
-        log.info("[PAGO] PATCH /api/pagos/{}/cancelar", id);
-        return ResponseEntity.ok(pagoService.cancelarPago(id));
-    }
-
-    @PatchMapping("/{id}/fallido")
-    @Operation(summary = "Marcar pago como fallido",
-               description = "Registra el fallo de un pago (ej: tarjeta rechazada). Solo desde PENDIENTE.")
-    @ApiResponse(responseCode = "200", description = "Pago marcado como fallido")
-    public ResponseEntity<PagoResponseDTO> marcarFallido(@PathVariable Long id) {
-        log.info("[PAGO] PATCH /api/pagos/{}/fallido", id);
-        return ResponseEntity.ok(pagoService.marcarComoFallido(id));
-    }
-
-    @PatchMapping("/{id}/reembolsar")
-    @Operation(summary = "Reembolsar un pago",
-               description = "Procesa el reembolso de un pago COMPLETADO.")
-    @ApiResponse(responseCode = "200", description = "Pago reembolsado")
-    public ResponseEntity<PagoResponseDTO> reembolsar(@PathVariable Long id) {
-        log.info("[PAGO] PATCH /api/pagos/{}/reembolsar", id);
-        return ResponseEntity.ok(pagoService.reembolsarPago(id));
     }
 
     // ── GET: Reporte financiero ──────────────────────────────────────────────
 
-    @GetMapping("/reporte/total-completados")
+    @GetMapping(params = {"desde", "hasta"})
     @Operation(summary = "Total de pagos completados en un rango de fechas",
                description = "Retorna la suma de montos de todos los pagos COMPLETADOS entre las fechas indicadas.")
     @ApiResponse(responseCode = "200", description = "Total calculado correctamente")
@@ -229,7 +186,7 @@ public class PagoController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime desde,
             @Parameter(description = "Fecha fin (ISO)", example = "2025-12-31T23:59:59")
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime hasta) {
-        log.info("[PAGO] GET /api/pagos/reporte/total-completados - desde={} hasta={}", desde, hasta);
+        log.info("[PAGO] GET /api/v1/pagos?desde={}&hasta={}", desde, hasta);
         return ResponseEntity.ok(pagoService.calcularTotalCompletados(desde, hasta));
     }
 
@@ -244,7 +201,7 @@ public class PagoController {
             @ApiResponse(responseCode = "422", description = "No se puede eliminar un pago en este estado")
     })
     public ResponseEntity<Void> eliminarPago(@PathVariable Long id) {
-        log.info("[PAGO] DELETE /api/pagos/{}", id);
+        log.info("[PAGO] DELETE /api/v1/pagos/{}", id);
         pagoService.eliminarPago(id);
         return ResponseEntity.noContent().build();
     }

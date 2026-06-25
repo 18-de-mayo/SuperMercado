@@ -6,7 +6,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-@Configuration
+@Configuration//¿qué hace el package config?: lo que hace es que configura la aplicacion, en este caso, swagger
 public class SwaggerConfig {
 
     @Value("${server.port:8083}")

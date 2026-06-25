@@ -2,7 +2,7 @@ package com.duoc.inventarios.service;
 
 import com.duoc.inventarios.client.ProductoClient;
 import com.duoc.inventarios.dto.InventarioDTO;
-import com.duoc.inventarios.dto.InventariosRequest;
+import com.duoc.inventarios.dto.InventarioRequest;
 import com.duoc.inventarios.exception.InventarioNotFoundException;
 import com.duoc.inventarios.exception.ProductoNotFoundException;
 import com.duoc.inventarios.model.Inventarios;
@@ -27,7 +27,7 @@ public class InventariosService {
 
     // ── CREATE ──────────────────────────────────────────────────────
 
-    public InventarioDTO crearInventario(InventariosRequest request) {
+    public InventarioDTO crearInventario(InventarioRequest request) {
         // Valida que el producto existe en MS producto antes de crear el inventario
         validarProducto(request.getProductoId());
 
@@ -49,7 +49,7 @@ public class InventariosService {
                 .collect(Collectors.toList());
     }
 
-    public InventarioDTO buscarInventarioPorId(Integer id) {
+    public InventarioDTO buscarInventarioPorId(Long id) {
         Inventarios inventario = inventariosRepository.findById(id)
                 .orElseThrow(() -> new InventarioNotFoundException(id));
         return convertirADTO(inventario);
@@ -57,7 +57,7 @@ public class InventariosService {
 
     // ── UPDATE ───────────────────────────────────────────────────────
 
-    public InventarioDTO actualizarInventario(Integer id, InventariosRequest request) {
+    public InventarioDTO actualizarInventario(Long id, InventarioRequest request) {
         // Valida que el producto existe antes de actualizar
         validarProducto(request.getProductoId());
 
@@ -73,7 +73,7 @@ public class InventariosService {
 
     // ── DELETE ───────────────────────────────────────────────────────
 
-    public void eliminarInventario(Integer id) {
+    public void eliminarInventario(Long id) {
         inventariosRepository.findById(id)
                 .orElseThrow(() -> new InventarioNotFoundException(id));
         inventariosRepository.deleteById(id);
@@ -85,8 +85,10 @@ public class InventariosService {
     private void validarProducto(Long productoId) {
         try {
             productoClient.obtenerProductoPorId(productoId);
+        } catch (feign.FeignException.NotFound e) {
+            throw new ProductoNotFoundException(productoId);
         } catch (Exception e) {
-            throw new ProductoNotFoundException(productoId.intValue());
+            throw new RuntimeException("El servicio de productos no está disponible en este momento.");
         }
     }
 

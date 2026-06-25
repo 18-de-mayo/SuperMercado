@@ -1,5 +1,6 @@
-package duoc.cl.despacho.feign;
+package duoc.cl.despacho.client;
 
+import duoc.cl.despacho.dto.PedidoResumenDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -8,7 +9,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 @FeignClient(name = "pedido-service", url = "${api.pedidos.url}")
 public interface PedidoFeignClient {
 
-    // Retorna Object genérico para no acoplar con entidades del MS pedido
     @GetMapping("/api/v1/pedidos/{id}")
-    Object obtenerPedido(@PathVariable("id") Long id);
+    PedidoResumenDTO obtenerPedido(@PathVariable("id") Long id);
 }

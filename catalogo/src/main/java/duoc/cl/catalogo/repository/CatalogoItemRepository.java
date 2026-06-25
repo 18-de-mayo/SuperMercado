@@ -13,7 +13,5 @@ import java.util.Optional;
 public interface CatalogoItemRepository
         extends JpaRepository<CatalogoItem, Long> {
     Optional<CatalogoItem> findByProductoId(Long productoId);
-    /*
-    * Probando...
-    * */
+    boolean existsByCampanaIdAndProductoId(Long campanaId, Long productoId);
 }

@@ -6,6 +6,6 @@ import lombok.Data;
 @Data
 @Schema(description = "DTO con datos básicos del producto")
 public class ProductoDTO {
-    private Integer id;
+    private Long id;
     private String nombre;
 }

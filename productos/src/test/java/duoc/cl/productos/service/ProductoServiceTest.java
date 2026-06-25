@@ -17,14 +17,18 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
-
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -53,19 +57,19 @@ class ProductoServiceTest {
         request = new ProductoRequest();
         request.setNombre("Teclado Mecánico");
         request.setDescripcion("Teclado RGB Switch Blue");
-        request.setPrecio(45000.0);
+        request.setPrecio(BigDecimal.valueOf(45000));
         request.setCantidad(20);
         request.setProveedorId(1L);
-        request.setCategoria("Periféricos");
+        request.setCategoriaId(1L);
 
         productoGuardado = new Producto();
         productoGuardado.setId(10L);
         productoGuardado.setNombre("Teclado Mecánico");
         productoGuardado.setDescripcion("Teclado RGB Switch Blue");
-        productoGuardado.setPrecio(45000.0);
+        productoGuardado.setPrecio(BigDecimal.valueOf(45000));
         productoGuardado.setCantidad(20);
         productoGuardado.setProveedorId(1L);
-        productoGuardado.setCategoria("Periféricos");
+        productoGuardado.setCategoriaId(1L);
 
         proveedorRemoto = new ProveedorDTO();
         proveedorRemoto.setId(1L);
@@ -83,12 +87,14 @@ class ProductoServiceTest {
         when(proveedorClient.obtenerProveedor(request.getProveedorId())).thenReturn(proveedorRemoto);
         when(repository.save(any(Producto.class))).thenReturn(productoGuardado);
 
+        when(categoriaClient.buscarPorId(anyLong())).thenReturn(new CategoriaDTO());
+
         ProductoDTO resultado = productoService.guardar(request);
 
-        assertNotNull(resultado, "El DTO retornado no debería ser nulo");
-        assertEquals(10L, resultado.getId(), "El ID debería coincidir con el asignado por la BD");
-        assertEquals("Teclado Mecánico", resultado.getNombre());
-        assertEquals("Distribuidora Tech Chile", resultado.getNombreProveedor(), "Debería mapear el nombre del proveedor remoto");
+        assertThat(resultado).isNotNull();
+        assertThat(resultado.getId()).isEqualTo(10L);
+        assertThat(resultado.getNombre()).isEqualTo("Teclado Mecánico");
+        assertThat(resultado.getNombreProveedor()).isEqualTo("Distribuidora Tech Chile");
 
         verify(repository, times(1)).save(any(Producto.class));
     }
@@ -98,11 +104,9 @@ class ProductoServiceTest {
     void debeLanzarExcepcionCuandoProductoEstaDuplicado() {
         when(repository.existsByNombre(request.getNombre())).thenReturn(true);
 
-        ProductoDuplicadoException excepcion = assertThrows(ProductoDuplicadoException.class,
-                () -> productoService.guardar(request)
-        );
-
-        assertEquals("El producto 'Teclado Mecánico' ya existe en el sistema.", excepcion.getMessage());
+        assertThatThrownBy(() -> productoService.guardar(request))
+                .isInstanceOf(ProductoDuplicadoException.class)
+                .hasMessage("El producto 'Teclado Mecánico' ya existe en el sistema.");
 
         verify(repository, never()).save(any(Producto.class));
         verify(proveedorClient, never()).obtenerProveedor(anyLong());
@@ -114,11 +118,47 @@ class ProductoServiceTest {
         when(repository.existsByNombre(request.getNombre())).thenReturn(false);
         when(proveedorClient.obtenerProveedor(request.getProveedorId())).thenReturn(null);
 
-        ResponseStatusException excepcion = assertThrows(ResponseStatusException.class,
-                () -> productoService.guardar(request)
-        );
+        assertThatThrownBy(() -> productoService.guardar(request))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasFieldOrPropertyWithValue("status", HttpStatus.NOT_FOUND);
+        verify(repository, never()).save(any(Producto.class));
+    }
 
-        assertEquals(HttpStatus.NOT_FOUND, excepcion.getStatusCode());
+    @Test
+    @DisplayName("guardar: lanza BAD_REQUEST cuando el ID del proveedor es nulo")
+    void debeLanzarExcepcionCuandoProveedorIdEsNulo() {
+        request.setProveedorId(null);
+
+        assertThatThrownBy(() -> productoService.guardar(request))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasFieldOrPropertyWithValue("status", HttpStatus.BAD_REQUEST);
+        verify(repository, never()).save(any(Producto.class));
+    }
+
+    @Test
+    @DisplayName("guardar: lanza BAD_GATEWAY cuando el microservicio de categorías no responde")
+    void debeLanzarBadGatewayCuandoCategoriaFallaAlGuardar() {
+        when(repository.existsByNombre(request.getNombre())).thenReturn(false);
+        when(proveedorClient.obtenerProveedor(request.getProveedorId())).thenReturn(proveedorRemoto);
+        when(categoriaClient.buscarPorId(anyLong())).thenThrow(new RuntimeException("Error de red"));
+
+        assertThatThrownBy(() -> productoService.guardar(request))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasFieldOrPropertyWithValue("status", HttpStatus.BAD_GATEWAY);
+        verify(repository, never()).save(any(Producto.class));
+    }
+
+    @Test
+    @DisplayName("guardar: lanza BAD_REQUEST cuando el ID de categoría es nulo")
+    void debeLanzarExcepcionCuandoCategoriaIdEsNulo() {
+        when(repository.existsByNombre(request.getNombre())).thenReturn(false);
+        when(proveedorClient.obtenerProveedor(request.getProveedorId())).thenReturn(proveedorRemoto);
+        request.setCategoriaId(null);
+
+        assertThatThrownBy(() -> productoService.guardar(request))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasFieldOrPropertyWithValue("status", HttpStatus.BAD_REQUEST)
+                .hasMessageContaining("ID de la categoría es obligatorio");
         verify(repository, never()).save(any(Producto.class));
     }
 
@@ -139,12 +179,13 @@ class ProductoServiceTest {
         when(repository.findById(idExistente)).thenReturn(Optional.of(productoExistente));
         when(repository.existsByNombre(request.getNombre())).thenReturn(false);
         when(proveedorClient.obtenerProveedor(request.getProveedorId())).thenReturn(proveedorRemoto);
+        when(categoriaClient.buscarPorId(anyLong())).thenReturn(new CategoriaDTO());
         when(repository.save(any(Producto.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         ProductoDTO resultado = productoService.actualizar(idExistente, request);
 
-        assertNotNull(resultado);
-        assertEquals("Mouse Gamer RGB", resultado.getNombre());
+        assertThat(resultado).isNotNull();
+        assertThat(resultado.getNombre()).isEqualTo("Mouse Gamer RGB");
         verify(repository, times(1)).save(any(Producto.class));
     }
 
@@ -154,9 +195,8 @@ class ProductoServiceTest {
         Long idInexistente = 999L;
         when(repository.findById(idInexistente)).thenReturn(Optional.empty());
 
-        assertThrows(ProductoNotFoundException.class,
-                () -> productoService.actualizar(idInexistente, request)
-        );
+        assertThatThrownBy(() -> productoService.actualizar(idInexistente, request))
+                .isInstanceOf(ProductoNotFoundException.class);
 
         verify(repository, never()).save(any(Producto.class));
     }
@@ -174,9 +214,8 @@ class ProductoServiceTest {
         when(repository.findById(idExistente)).thenReturn(Optional.of(productoOriginal));
         when(repository.existsByNombre(request.getNombre())).thenReturn(true);
 
-        assertThrows(ProductoDuplicadoException.class,
-                () -> productoService.actualizar(idExistente, request)
-        );
+        assertThatThrownBy(() -> productoService.actualizar(idExistente, request))
+                .isInstanceOf(ProductoDuplicadoException.class);
 
         verify(repository, never()).save(any(Producto.class));
     }
@@ -192,10 +231,23 @@ class ProductoServiceTest {
 
         List<ProductoDTO> resultado = productoService.listar();
 
-        assertNotNull(resultado);
-        assertFalse(resultado.isEmpty());
-        assertEquals(1, resultado.size());
+        assertThat(resultado).isNotNull().hasSize(1);
         verify(repository, times(1)).findAll();
+    }
+
+    @Test
+    @DisplayName("listarPaginado: retorna productos paginados correctamente")
+    void debeListarProductosPaginados() {
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<Producto> page = new PageImpl<>(List.of(productoGuardado));
+        when(repository.findAll((Pageable) any())).thenReturn(page);
+
+        Page<ProductoDTO> resultado = productoService.listarPaginado(pageable);
+
+        assertThat(resultado).isNotNull();
+        assertThat(resultado.getContent()).hasSize(1);
+        assertThat(resultado.getContent().getFirst().getNombre()).isEqualTo("Teclado Mecánico");
+        verify(repository, times(1)).findAll((Pageable) any());
     }
 
     @Test
@@ -206,9 +258,9 @@ class ProductoServiceTest {
 
         ProductoDTO resultado = productoService.buscar(idBuscado);
 
-        assertNotNull(resultado);
-        assertEquals(idBuscado, resultado.getId());
-        assertEquals("Teclado Mecánico", resultado.getNombre());
+        assertThat(resultado).isNotNull();
+        assertThat(resultado.getId()).isEqualTo(idBuscado);
+        assertThat(resultado.getNombre()).isEqualTo("Teclado Mecánico");
         verify(repository, times(1)).findById(idBuscado);
     }
 
@@ -220,9 +272,8 @@ class ProductoServiceTest {
 
         List<ProductoDTO> resultado = productoService.buscarPorNombre(textoBusqueda);
 
-        assertNotNull(resultado);
-        assertFalse(resultado.isEmpty());
-        assertEquals("Teclado Mecánico", resultado.getFirst().getNombre());
+        assertThat(resultado).isNotEmpty();
+        assertThat(resultado.getFirst().getNombre()).isEqualTo("Teclado Mecánico");
         verify(repository, times(1)).findByNombreContainingIgnoreCase(textoBusqueda);
     }
 
@@ -233,8 +284,7 @@ class ProductoServiceTest {
 
         List<ProductoDTO> resultado = productoService.listarConStock();
 
-        assertNotNull(resultado);
-        assertFalse(resultado.isEmpty());
+        assertThat(resultado).isNotEmpty();
         verify(repository, times(1)).findByCantidadGreaterThan(0);
     }
 
@@ -245,7 +295,7 @@ class ProductoServiceTest {
         when(repository.existsById(idEliminar)).thenReturn(true);
         doNothing().when(repository).deleteById(idEliminar);
 
-        assertDoesNotThrow(() -> productoService.eliminar(idEliminar));
+        assertThatNoException().isThrownBy(() -> productoService.eliminar(idEliminar));
 
         verify(repository, times(1)).deleteById(idEliminar);
     }
@@ -256,9 +306,8 @@ class ProductoServiceTest {
         Long idInexistente = 999L;
         when(repository.existsById(idInexistente)).thenReturn(false);
 
-        assertThrows(ProductoNotFoundException.class,
-                () -> productoService.eliminar(idInexistente)
-        );
+        assertThatThrownBy(() -> productoService.eliminar(idInexistente))
+                .isInstanceOf(ProductoNotFoundException.class);
 
         verify(repository, never()).deleteById(anyLong());
     }
@@ -276,15 +325,13 @@ class ProductoServiceTest {
         categoriaMock.setNombre("Periféricos");
 
         when(categoriaClient.buscarPorId(categoriaId)).thenReturn(categoriaMock);
-        when(repository.findAll()).thenReturn(List.of(productoGuardado));
+        when(repository.findByCategoriaId(categoriaId)).thenReturn(List.of(productoGuardado));
 
         List<ProductoDTO> resultado = productoService.listarPorCategoriaRemota(categoriaId);
 
-        assertNotNull(resultado);
-        assertFalse(resultado.isEmpty());
-        assertEquals(1, resultado.size());
+        assertThat(resultado).isNotNull().hasSize(1);
         verify(categoriaClient, times(1)).buscarPorId(categoriaId);
-        verify(repository, times(1)).findAll();
+        verify(repository, times(1)).findByCategoriaId(categoriaId);
     }
 
     @Test
@@ -293,11 +340,9 @@ class ProductoServiceTest {
         Long categoriaId = 5L;
         when(categoriaClient.buscarPorId(categoriaId)).thenThrow(new RuntimeException("Error de red"));
 
-        ResponseStatusException excepcion = assertThrows(ResponseStatusException.class,
-                () -> productoService.listarPorCategoriaRemota(categoriaId)
-        );
-
-        assertEquals(HttpStatus.BAD_GATEWAY, excepcion.getStatusCode());
+        assertThatThrownBy(() -> productoService.listarPorCategoriaRemota(categoriaId))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasFieldOrPropertyWithValue("status", HttpStatus.BAD_GATEWAY);
         verify(repository, never()).findAll();
     }
 }

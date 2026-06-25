@@ -7,12 +7,12 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
 
-import com.duoc.pedidos.Client.ClienteClient;
+import com.duoc.pedidos.client.ClienteClient;
 import com.duoc.pedidos.dto.ClienteDTO;
 import com.duoc.pedidos.dto.DetallePedidoDTO;
-import com.duoc.pedidos.dto.DetallePedidosRequest;
+import com.duoc.pedidos.dto.DetallePedidoRequest;
 import com.duoc.pedidos.dto.PedidoDTO;
-import com.duoc.pedidos.dto.PedidosRequest;
+import com.duoc.pedidos.dto.PedidoRequest;
 import com.duoc.pedidos.exception.ClientesNotFoundException;
 import com.duoc.pedidos.exception.PedidosNotFoundException;
 import com.duoc.pedidos.model.DetallePedidos;
@@ -47,8 +47,8 @@ class PedidosServiceTest {
     @InjectMocks
     private PedidosService pedidosService;
 
-    private PedidosRequest request;
-    private PedidosRequest requestSinDetalles;
+    private PedidoRequest request;
+    private PedidoRequest requestSinDetalles;
     private Pedidos entity;
     private Pedidos savedEntity;
     private ClienteDTO clienteDTO;
@@ -56,18 +56,18 @@ class PedidosServiceTest {
 
     @BeforeEach
     void setUp() {
-        DetallePedidosRequest detalleRequest = new DetallePedidosRequest();
+        DetallePedidoRequest detalleRequest = new DetallePedidoRequest();
         detalleRequest.setIdProducto(10);
         detalleRequest.setCantidad(2);
         detalleRequest.setPrecioUnitario(BigDecimal.valueOf(1500));
 
-        request = new PedidosRequest();
+        request = new PedidoRequest();
         request.setIdCliente(1);
         request.setFechaPedido(LocalDateTime.of(2025, 6, 21, 0, 0));
         request.setEstadoPedido(EstadoPedido.PENDIENTE);
         request.setDetalles(List.of(detalleRequest));
 
-        requestSinDetalles = new PedidosRequest();
+        requestSinDetalles = new PedidoRequest();
         requestSinDetalles.setIdCliente(1);
         requestSinDetalles.setFechaPedido(LocalDateTime.of(2025, 6, 21, 0, 0));
         requestSinDetalles.setEstadoPedido(EstadoPedido.PENDIENTE);

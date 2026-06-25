@@ -10,11 +10,13 @@ import java.math.BigDecimal;
 
 @Data
 @Schema(description = "Solicitud de un detalle de pedido")
-public class DetallePedidosRequest {
+public class DetallePedidoRequest {
 
+    @Schema(description = "ID del producto a incluir", example = "100")
     @NotNull(message = "El id del producto es obligatorio")
-    private Integer idProducto;
+    private Long idProducto;
 
+    @Schema(description = "Cantidad del producto", example = "2")
     @NotNull(message = "La cantidad es obligatoria")
     @Positive(message = "La cantidad debe ser mayor a cero")
     private Integer cantidad;

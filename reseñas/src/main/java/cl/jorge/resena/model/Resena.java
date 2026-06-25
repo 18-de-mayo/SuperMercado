@@ -37,11 +37,11 @@ public class Resena {
     @NotNull
     private Integer calificacion;
 
-    @Column(length = 200)
+    @Column(nullable = false, length = 200)
     @Size(max = 200)
     private String titulo;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(nullable = false, columnDefinition = "TEXT")
     @Size(max = 2000)
     private String comentario;
 

@@ -4,6 +4,12 @@ spring:
   application:
     name: ms-despacho
 
+springdoc:
+  api-docs:
+    path: /api/v1/despachos-docs
+  swagger-ui:
+    path: /api/v1/despachos-swagger
+
 ---
 # ─────────────────────────────────────────────────────────────────
 # PERFIL DE DESARROLLO LOCAL (DEV)

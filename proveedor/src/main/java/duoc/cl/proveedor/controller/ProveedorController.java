@@ -73,4 +73,32 @@ public class ProveedorController {
         log.info("Recibida petición HTTP GET para buscar proveedor por ID: {}", id);
         return ResponseEntity.ok(proveedorService.buscar(id));
     }
+
+    @Operation(summary = "Actualizar proveedor", description = "Actualiza los datos de un proveedor existente")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Proveedor actualizado exitosamente",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ProveedorDTO.class))),
+            @ApiResponse(responseCode = "404", description = "Proveedor no encontrado", content = @Content),
+            @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos", content = @Content)
+    })
+    @PutMapping("/{id}")
+    public ResponseEntity<ProveedorDTO> actualizar(
+            @Parameter(description = "ID del proveedor a actualizar", required = true, example = "1") @PathVariable Long id,
+            @Valid @RequestBody ProveedorRequest request) {
+        log.info("Recibida petición HTTP PUT para actualizar proveedor ID: {}", id);
+        return ResponseEntity.ok(proveedorService.actualizar(id, request));
+    }
+
+    @Operation(summary = "Eliminar proveedor", description = "Elimina un proveedor del sistema")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Proveedor eliminado exitosamente"),
+            @ApiResponse(responseCode = "404", description = "Proveedor no encontrado", content = @Content)
+    })
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> eliminar(
+            @Parameter(description = "ID del proveedor a eliminar", required = true, example = "1") @PathVariable Long id) {
+        log.info("Recibida petición HTTP DELETE para eliminar proveedor ID: {}", id);
+        proveedorService.eliminar(id);
+        return ResponseEntity.noContent().build();
+    }
 }

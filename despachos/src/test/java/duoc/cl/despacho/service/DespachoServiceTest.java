@@ -4,8 +4,9 @@ import duoc.cl.despacho.dto.DespachoDTO;
 import duoc.cl.despacho.dto.DespachoRequest;
 import duoc.cl.despacho.dto.ProveedorDTO;
 import duoc.cl.despacho.exception.DespachoNotFoundException;
-import duoc.cl.despacho.feign.PedidoFeignClient;
-import duoc.cl.despacho.feign.ProveedorFeignClient;
+import duoc.cl.despacho.client.PedidoFeignClient;
+import duoc.cl.despacho.client.ProveedorFeignClient;
+import duoc.cl.despacho.dto.PedidoResumenDTO;
 import duoc.cl.despacho.model.Despacho;
 import duoc.cl.despacho.model.EstadoDespacho;
 import duoc.cl.despacho.repository.DespachoRepository;
@@ -92,7 +93,7 @@ public class DespachoServiceTest {
         @Test
         @DisplayName("Debe crear despacho exitosamente cuando Pedido y Proveedor existen")
         void givenValidRequest_whenGuardar_thenReturnDespachoDTO() {
-            when(pedidoFeignClient.obtenerPedido(anyLong())).thenReturn(new Object());
+            when(pedidoFeignClient.obtenerPedido(anyLong())).thenReturn(new PedidoResumenDTO());
             when(proveedorFeignClient.obtenerProveedor(anyLong())).thenReturn(mockProveedor);
             when(repository.save(any(Despacho.class))).thenReturn(mockDespacho);
 
@@ -113,6 +114,18 @@ public class DespachoServiceTest {
             assertThatThrownBy(() -> service.guardar(validRequest))
                     .isInstanceOf(ResponseStatusException.class)
                     .hasMessageContaining("El pedido con ID 100 no existe");
+            verify(repository, never()).save(any(Despacho.class));
+        }
+
+        @Test
+        @DisplayName("Debe lanzar exception cuando el proveedor remoto no existe")
+        void givenInvalidProveedorId_whenGuardar_thenThrowResponseStatusException() {
+            when(pedidoFeignClient.obtenerPedido(anyLong())).thenReturn(new PedidoResumenDTO());
+            when(proveedorFeignClient.obtenerProveedor(anyLong())).thenThrow(new RuntimeException("Error HTTP 404"));
+
+            assertThatThrownBy(() -> service.guardar(validRequest))
+                    .isInstanceOf(ResponseStatusException.class)
+                    .hasMessageContaining("El proveedor con ID 5 no existe");
             verify(repository, never()).save(any(Despacho.class));
         }
     }
@@ -142,6 +155,60 @@ public class DespachoServiceTest {
             List<DespachoDTO> result = service.listar();
 
             assertThat(result).isEmpty();
+        }
+    }
+
+    @Nested
+    @DisplayName("actualizar()")
+    class ActualizarTests {
+
+        @Test
+        @DisplayName("Debe actualizar despacho exitosamente cuando los datos son válidos")
+        void givenValidRequest_whenActualizar_thenReturnDespachoDTO() {
+            when(repository.findById(1L)).thenReturn(Optional.of(mockDespacho));
+            when(proveedorFeignClient.obtenerProveedor(anyLong())).thenReturn(mockProveedor);
+            when(repository.save(any(Despacho.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+            DespachoDTO result = service.actualizar(1L, validRequest);
+
+            assertThat(result).isNotNull();
+            assertThat(result.getEstado()).isEqualTo(EstadoDespacho.PENDIENTE);
+            verify(repository, times(1)).save(any(Despacho.class));
+        }
+
+        @Test
+        @DisplayName("Debe lanzar exception cuando el despacho a actualizar no existe")
+        void givenNonExistingId_whenActualizar_thenThrowDespachoNotFoundException() {
+            when(repository.findById(999L)).thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> service.actualizar(999L, validRequest))
+                    .isInstanceOf(DespachoNotFoundException.class);
+            verify(repository, never()).save(any(Despacho.class));
+        }
+    }
+
+    @Nested
+    @DisplayName("eliminar()")
+    class EliminarTests {
+
+        @Test
+        @DisplayName("Debe eliminar exitosamente cuando el ID existe")
+        void givenExistingId_whenEliminar_thenDeleteSuccessfully() {
+            when(repository.findById(1L)).thenReturn(Optional.of(mockDespacho));
+            doNothing().when(repository).delete(any(Despacho.class));
+
+            assertThatNoException().isThrownBy(() -> service.eliminar(1L));
+            verify(repository, times(1)).delete(any(Despacho.class));
+        }
+
+        @Test
+        @DisplayName("Debe lanzar exception cuando el ID a eliminar no existe")
+        void givenNonExistingId_whenEliminar_thenThrowDespachoNotFoundException() {
+            when(repository.findById(999L)).thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> service.eliminar(999L))
+                    .isInstanceOf(DespachoNotFoundException.class);
+            verify(repository, never()).delete(any(Despacho.class));
         }
     }
 

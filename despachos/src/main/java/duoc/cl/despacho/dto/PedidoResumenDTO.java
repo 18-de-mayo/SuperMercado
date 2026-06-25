@@ -1,0 +1,18 @@
+package duoc.cl.despacho.dto;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Data;
+
+@Data
+@Schema(description = "DTO con datos resumidos del pedido (obtenido desde MS pedidos via Feign)")
+public class PedidoResumenDTO {
+
+    @Schema(description = "ID del pedido", example = "1")
+    private Long id;
+
+    @Schema(description = "ID del cliente asociado", example = "1")
+    private Long idCliente;
+
+    @Schema(description = "Estado actual del pedido", example = "COMPLETADO")
+    private String estadoPedido;
+}

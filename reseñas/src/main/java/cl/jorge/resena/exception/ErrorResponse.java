@@ -15,8 +15,12 @@ import java.util.List;
 @Builder
 @Schema(description = "Respuesta de error estándar")
 public class ErrorResponse {
+    @Schema(description = "Marca de tiempo del error")
     private LocalDateTime timestamp;
+    @Schema(description = "Código de error HTTP", example = "400")
     private int status;
+    @Schema(description = "Descripción del error", example = "Solicitud inválida")
     private String error;
+    @Schema(description = "Lista de mensajes de error")
     private List<String> messages;
 }

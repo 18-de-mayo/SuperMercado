@@ -9,8 +9,7 @@ import com.microservicio.cliente.model.Cliente;//¿el modelado original?: no, no
 import com.microservicio.cliente.model.Cliente.EstadoCliente;// ¿esto es una subclase?: enumeracion dentro de la clase
 import com.microservicio.cliente.repository.ClienteRepository;//repositorio porque con el nos comunicamos. 
 import lombok.RequiredArgsConstructor;//lombok
-import org.slf4j.Logger;//logger de slf4j es?:
-import org.slf4j.LoggerFactory;//factoria de logs por qué, por qué usa la palabra factory?: 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;//estereotype ya dice mucho
 import org.springframework.transaction.annotation.Transactional;// transactional
 
@@ -21,11 +20,10 @@ import java.util.stream.Collectors;//collectors para hacer lista de entidades un
  * Implementación de la lógica de negocio para clientes.
  * Contiene las reglas de dominio: unicidad de RUT/email, validación de estado, etc.
  */
+@Slf4j
 @Service//marca esta clase coo un servicio, es decir, la capa de servicio, la capa intermedia entre el controlador y el repositorio
 @RequiredArgsConstructor//para atributos finales, siendo final para inyeccion. @RequiredArgsConstructor actua sobre los atributos finales. 
 public class ClienteServiceImpl implements ClienteService {
-
-    private static final Logger log = LoggerFactory.getLogger(ClienteServiceImpl.class);//privado stattico final Logger log = metodo con parametros, paramtros que significan
 
     private final ClienteRepository clienteRepository;
 

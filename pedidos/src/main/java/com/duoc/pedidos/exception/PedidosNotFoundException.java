@@ -1,7 +1,7 @@
 package com.duoc.pedidos.exception;
 
 public class PedidosNotFoundException extends RuntimeException {
-    public PedidosNotFoundException(Integer id) {
+    public PedidosNotFoundException(Long id) {
         super("Pedido no encontrado con id" + id);
     }
 }

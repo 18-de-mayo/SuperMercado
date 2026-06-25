@@ -2,7 +2,13 @@ spring:
   profiles:
     active: dev
   application:
-    name: pedidos
+    name: ms-pedido
+
+springdoc:
+  api-docs:
+    path: /api/v1/pedidos-docs
+  swagger-ui:
+    path: /api/v1/pedidos-swagger
 
 ---
 spring:
@@ -46,7 +52,7 @@ api:
   productos:
     url: http://localhost:8081/api/v1/
   clientes:
-    url: http://localhost:8086/api
+    url: http://localhost:8086/api/v1
 
 logging:
   level:
@@ -87,7 +93,7 @@ api:
   productos:
     url: http://${PRODUCTOS_SERVICE_HOST:localhost}:8081/api/v1/
   clientes:
-    url: http://${CLIENTES_SERVICE_HOST:localhost}:8086/api
+    url: http://${CLIENTES_SERVICE_HOST:localhost}:8086/api/v1
 
 logging:
   level:

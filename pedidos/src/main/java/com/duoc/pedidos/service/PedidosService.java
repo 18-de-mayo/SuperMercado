@@ -1,12 +1,15 @@
 package com.duoc.pedidos.service;
 
-import com.duoc.pedidos.Client.ClienteClient;
+import com.duoc.pedidos.client.ClienteClient;
 import com.duoc.pedidos.dto.*;
 import com.duoc.pedidos.exception.ClientesNotFoundException;
+import com.duoc.pedidos.exception.EstadoInvalidoException;
 import com.duoc.pedidos.exception.PedidosNotFoundException;
 import com.duoc.pedidos.model.DetallePedidos;
+import com.duoc.pedidos.model.EstadoPedido;
 import com.duoc.pedidos.model.Pedidos;
 import com.duoc.pedidos.repository.PedidosRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -16,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class PedidosService {
 
@@ -25,7 +29,7 @@ public class PedidosService {
     @Autowired
     private ClienteClient clienteClient;
 
-    public PedidoDTO crearPedido(PedidosRequest request) {
+    public PedidoDTO crearPedido(PedidoRequest request) {
         validarCliente(request.getIdCliente());
 
         Pedidos pedidos = new Pedidos();
@@ -35,7 +39,7 @@ public class PedidosService {
 
         List<DetallePedidos> listaDetalles = new ArrayList<>();
         if (request.getDetalles() != null) {
-            for (DetallePedidosRequest detReq : request.getDetalles()) {
+            for (DetallePedidoRequest detReq : request.getDetalles()) {
                 DetallePedidos detalle = new DetallePedidos();
                 detalle.setIdProducto(detReq.getIdProducto());
                 detalle.setCantidad(detReq.getCantidad());
@@ -58,15 +62,17 @@ public class PedidosService {
         return pedidosRepository.findAll().stream().map(this::convertirADTO).collect(Collectors.toList());
     }
 
-    public PedidoDTO buscarPorId(Integer id) {
+    public PedidoDTO buscarPorId(Long id) {
         Pedidos pedidos = pedidosRepository.findById(id).orElseThrow(() -> new PedidosNotFoundException(id));
         return convertirADTO(pedidos);
     }
 
-    public PedidoDTO actualizarPedido(Integer id, PedidosRequest request) {
+    public PedidoDTO actualizarPedido(Long id, PedidoRequest request) {
         validarCliente(request.getIdCliente());
 
         Pedidos pedidosExistente = pedidosRepository.findById(id).orElseThrow(() -> new PedidosNotFoundException(id));
+
+        validarTransicionEstado(pedidosExistente.getEstadoPedido(), request.getEstadoPedido());
 
         pedidosExistente.setIdCliente(request.getIdCliente());
         pedidosExistente.setFechaPedido(request.getFechaPedido());
@@ -74,15 +80,30 @@ public class PedidosService {
         return convertirADTO(pedidosRepository.save(pedidosExistente));
     }
 
-    public void eliminarPedido(Integer id) {
+    public void eliminarPedido(Long id) {
         pedidosRepository.findById(id).orElseThrow(() -> new PedidosNotFoundException(id));
         pedidosRepository.deleteById(id);
     }
 
-    private void validarCliente(Integer idCliente) {
-        List<ClienteDTO> clientes = clienteClient.obtenerClientes();
-        boolean existe = clientes.stream().anyMatch(c -> c.getId().equals(idCliente));
-        if (!existe) throw new ClientesNotFoundException(idCliente);
+    private void validarCliente(Long idCliente) {
+        try {
+            clienteClient.obtenerClientePorId(idCliente);
+        } catch (Exception e) {
+            throw new ClientesNotFoundException(idCliente);
+        }
+    }
+
+    private void validarTransicionEstado(EstadoPedido actual, EstadoPedido nuevo) {
+        boolean valida = switch (actual) {
+            case PENDIENTE -> nuevo == EstadoPedido.COMPLETADO || nuevo == EstadoPedido.CANCELADO;
+            case COMPLETADO -> false;
+            case CANCELADO -> false;
+        };
+        if (!valida) {
+            throw new EstadoInvalidoException(
+                "Transicion invalida: " + actual + " -> " + nuevo +
+                ". Transiciones permitidas: PENDIENTE -> COMPLETADO, PENDIENTE -> CANCELADO");
+        }
     }
 
     private PedidoDTO convertirADTO(Pedidos pedidos) {

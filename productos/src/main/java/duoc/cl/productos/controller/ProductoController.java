@@ -15,7 +15,9 @@ import jakarta.validation.Valid;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 
@@ -52,15 +54,36 @@ public class ProductoController {
         return ResponseEntity.status(HttpStatus.CREATED).body(nuevoProducto);
     }
 
-    // 2. Listar todos los productos sin filtros
-    @Operation(summary = "Listar productos", description = "Retorna todos los productos almacenados en el catálogo local.")
+    // 2. Listar productos con filtros opcionales
+    @Operation(summary = "Listar o buscar productos", description = "Retorna productos con filtros opcionales por nombre, stock o paginación.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Lista de productos obtenida exitosamente",
                     content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = ProductoDTO.class))))
     })
     @GetMapping
-    public ResponseEntity<List<ProductoDTO>> listar() {
-        log.info("Recibida petición HTTP GET para listar todos los productos");
+    public ResponseEntity<List<ProductoDTO>> listar(
+            @Parameter(description = "Nombre o coincidencia parcial", example = "coca-cola")
+            @RequestParam(required = false) String nombre,
+            @Parameter(description = "Filtrar solo productos con stock", example = "true")
+            @RequestParam(required = false) Boolean conStock,
+            @Parameter(description = "Número de página (0-indexado)", example = "0")
+            @RequestParam(required = false, defaultValue = "0") int pagina,
+            @Parameter(description = "Tamaño de página", example = "20")
+            @RequestParam(required = false, defaultValue = "100") int tamano) {
+        if (nombre != null && !nombre.isBlank()) {
+            log.info("GET /api/v1/productos?nombre={} - Buscando productos", nombre);
+            return ResponseEntity.ok(productoService.buscarPorNombre(nombre));
+        }
+        if (Boolean.TRUE.equals(conStock)) {
+            log.info("GET /api/v1/productos?conStock=true - Listando con stock disponible");
+            return ResponseEntity.ok(productoService.listarConStock());
+        }
+        if (pagina > 0 || tamano != 100) {
+            log.info("GET /api/v1/productos?pagina={}&tamano={} - Listado paginado", pagina, tamano);
+            Pageable pageable = PageRequest.of(pagina, tamano);
+            return ResponseEntity.ok(productoService.listarPaginado(pageable).getContent());
+        }
+        log.info("GET /api/v1/productos - Listando todos los productos");
         return ResponseEntity.ok(productoService.listar());
     }
 
@@ -74,44 +97,8 @@ public class ProductoController {
     @GetMapping("/{id}")
     public ResponseEntity<ProductoDTO> buscar(
             @Parameter(description = "ID del producto a buscar", required = true, example = "1") @PathVariable Long id) {
-        log.info("Recibida petición HTTP GET para buscar producto por ID: {}", id);
+        log.info("GET /api/v1/productos/{} - Buscando producto por ID", id);
         return ResponseEntity.ok(productoService.buscar(id));
-    }
-
-    // 4. Búsqueda por coincidencia parcial de nombre
-    @Operation(summary = "Buscar productos por nombre", description = "Filtra y retorna productos que coincidan parcialmente con el nombre proporcionado.")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Filtro aplicado con éxito",
-                    content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = ProductoDTO.class))))
-    })
-    @GetMapping("/buscar")
-    public ResponseEntity<List<ProductoDTO>> buscarPorNombre(
-            @Parameter(description = "Nombre o coincidencia parcial a filtrar", required = true, example = "coca-cola") @RequestParam String nombre) {
-        log.info("Recibida petición HTTP GET para buscar productos que contengan: '{}'", nombre);
-        return ResponseEntity.ok(productoService.buscarPorNombre(nombre));
-    }
-
-    // 5. Filtrar solo los productos que tengan stock disponible
-    @Operation(summary = "Listar productos con stock disponible", description = "Retorna una lista de productos cuya cantidad disponible en bodega sea mayor a 0.")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Lista de productos con stock obtenida con éxito",
-                    content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = ProductoDTO.class))))
-    })
-    @GetMapping("/stock")
-    public ResponseEntity<List<ProductoDTO>> listarConStock() {
-        log.info("Recibida petición HTTP GET para listar productos con stock disponible");
-        return ResponseEntity.ok(productoService.listarConStock());
-    }
-
-    // 6. Listado paginado utilizando Pageable de Spring
-    @Operation(summary = "Listar productos de forma paginada", description = "Retorna una página ordenada de productos basándose en los parámetros de paginación.")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Página de productos obtenida exitosamente")
-    })
-    @GetMapping("/paginado")
-    public ResponseEntity<Page<ProductoDTO>> listarPaginado(Pageable pageable) {
-        log.info("Recibida petición HTTP GET paginada: tamaño={}, página={}", pageable.getPageSize(), pageable.getPageNumber());
-        return ResponseEntity.ok(productoService.listarPaginado(pageable));
     }
 
     // 7. Actualizar producto existente con re-validación de nombre y proveedor

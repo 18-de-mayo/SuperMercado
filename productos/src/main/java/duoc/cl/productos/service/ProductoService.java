@@ -45,6 +45,7 @@ public class ProductoService {
 
         // Validación distribuida: antes de guardar, verificamos por Feign si el proveedor existe en el otro ms
         validarProveedorRemoto(request.getProveedorId());
+        validarCategoriaRemota(request.getCategoriaId());
 
         // Si pasó las validaciones, traspasamos los datos del Request a la Entidad para la persistencia
         Producto producto = new Producto();
@@ -52,8 +53,8 @@ public class ProductoService {
         producto.setDescripcion(request.getDescripcion());
         producto.setPrecio(request.getPrecio());
         producto.setCantidad(request.getCantidad());
-        producto.setProveedorId(request.getProveedorId()); // Long mapeado de forma limpia
-        producto.setCategoria(request.getCategoria());
+        producto.setProveedorId(request.getProveedorId());
+        producto.setCategoriaId(request.getCategoriaId());
 
         // Guardamos en MySQL y retornamos la respuesta formateada como DTO de salida
         ProductoDTO guardadoDTO = mapToDTO(repository.save(producto));
@@ -106,8 +107,9 @@ public class ProductoService {
             throw new ProductoDuplicadoException(request.getNombre());
         }
 
-        // Volvemos a validar el proveedor por Feign por si decidieron cambiarlo en el formulario
+        // Volvemos a validar el proveedor y categoría por Feign por si decidieron cambiarlo en el formulario
         validarProveedorRemoto(request.getProveedorId());
+        validarCategoriaRemota(request.getCategoriaId());
 
         // Seteamos los nuevos valores sobre la entidad que recuperamos
         producto.setNombre(request.getNombre());
@@ -115,7 +117,7 @@ public class ProductoService {
         producto.setPrecio(request.getPrecio());
         producto.setCantidad(request.getCantidad());
         producto.setProveedorId(request.getProveedorId());
-        producto.setCategoria(request.getCategoria());
+        producto.setCategoriaId(request.getCategoriaId());
 
         return mapToDTO(repository.save(producto));
     }
@@ -125,26 +127,46 @@ public class ProductoService {
         log.info("Consultando al ms-categoria para verificar la existencia del ID de categoría: {}", categoriaId);
         try {
             // Llamamos al cliente Feign usando el ID numérico que expuso el compañero en su controlador
-            Object categoriaRemota = categoriaClient.buscarPorId(categoriaId);
+            var categoriaRemota = categoriaClient.buscarPorId(categoriaId);
 
-            // Si el ms de categorías responde pero viene vacío, tiramos un 404 de negocio
             if (categoriaRemota == null) {
                 log.warn("Validación fallida: La categoría con ID {} no existe en el sistema remoto", categoriaId);
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "La categoría especificada no existe.");
             }
 
-            // Flujo feliz: Como la categoría sí existe allá, procedemos a listar nuestro catálogo
-            log.info("Categoría remota válida en ms-categoria. Listando y mapeando productos del catálogo local.");
-            return repository.findAll().stream()
+            // Flujo feliz: Filtramos productos locales que coincidan con esa categoría
+            log.info("Categoría remota válida. Filtrando productos locales con categoriaId = {}", categoriaId);
+            return repository.findByCategoriaId(categoriaId).stream()
                     .map(this::mapToDTO)
                     .collect(Collectors.toList());
 
         } catch (ResponseStatusException e) {
-            throw e; // Re-lanzamos el 404 para que lo pesque el handler
+            throw e;
         } catch (Exception e) {
-            // Manejo de infraestructura: si el ms-categoria está apagado, devolvemos un 502 Bad Gateway
             log.error("Error crítico de infraestructura al comunicar con categoria-service para ID {}: {}", categoriaId, e.getMessage());
             throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "El servicio remoto de categorías no respondió correctamente.");
+        }
+    }
+
+    private void validarCategoriaRemota(Long categoriaId) {
+        if (categoriaId == null) {
+            log.error("Intento de validación fallido: El id de la categoría es nulo");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El ID de la categoría es obligatorio.");
+        }
+        try {
+            log.info("Validando existencia de la categoría ID: {} en el microservicio remoto", categoriaId);
+            var categoria = categoriaClient.buscarPorId(categoriaId);
+
+            if (categoria == null) {
+                log.error("La categoría con ID {} no fue encontrada en el sistema remoto.", categoriaId);
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "La categoría asociada no existe en el sistema remoto.");
+            }
+
+        } catch (ResponseStatusException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Error de comunicación con categoria-service para ID {}: {}", categoriaId, e.getMessage());
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "No se pudo conectar con el servicio remoto de categorías.");
         }
     }
 
@@ -179,19 +201,31 @@ public class ProductoService {
         dto.setNombre(producto.getNombre());
         dto.setDescripcion(producto.getDescripcion());
         dto.setCantidad(producto.getCantidad());
-        dto.setCategoria(producto.getCategoria());
+        dto.setCategoriaId(producto.getCategoriaId());
 
         // Si el producto tiene un proveedor asociado, usamos Feign en tiempo real para traer su nombre comercial
         if (producto.getProveedorId() != null) {
             try {
                 var proveedorRemote = proveedorClient.obtenerProveedor(producto.getProveedorId());
                 if (proveedorRemote != null) {
-                    dto.setNombreProveedor(proveedorRemote.getNombre()); // Mapeamos el nombre que vino de la API externa
+                    dto.setNombreProveedor(proveedorRemote.getNombre());
                 }
             } catch (Exception e) {
-                // Tolerancia a fallos: Si falla la red de proveedores, la API no se cae, solo avisa que no está disponible
                 log.warn("No se pudo obtener detalles del proveedor remoto para ID {}: {}", producto.getProveedorId(), e.getMessage());
                 dto.setNombreProveedor("Proveedor no disponible");
+            }
+        }
+
+        // Si el producto tiene una categoría asociada, traemos su nombre desde el MS Categorías
+        if (producto.getCategoriaId() != null) {
+            try {
+                var categoriaRemote = categoriaClient.buscarPorId(producto.getCategoriaId());
+                if (categoriaRemote != null) {
+                    dto.setNombreCategoria(categoriaRemote.getNombre());
+                }
+            } catch (Exception e) {
+                log.warn("No se pudo obtener detalles de la categoría remota para ID {}: {}", producto.getCategoriaId(), e.getMessage());
+                dto.setNombreCategoria("Categoría no disponible");
             }
         }
 

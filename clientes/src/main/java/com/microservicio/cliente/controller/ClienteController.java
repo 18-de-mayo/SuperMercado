@@ -14,8 +14,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -27,13 +26,12 @@ import java.util.Map;
  * Controlador REST del microservicio de clientes.
  * Solo orquesta peticiones HTTP, toda la lógica reside en ClienteService.
  */
+@Slf4j
 @RestController
-@RequestMapping("/api/clientes")
+@RequestMapping("/api/v1/clientes")
 @RequiredArgsConstructor
 @Tag(name = "Clientes", description = "API para la gestión de clientes del sistema")
 public class ClienteController {
-
-    private static final Logger log = LoggerFactory.getLogger(ClienteController.class);
 
     private final ClienteService clienteService;
 
@@ -52,18 +50,24 @@ public class ClienteController {
     @PostMapping
     public ResponseEntity<ClienteResponseDTO> crearCliente(
             @Valid @RequestBody ClienteRequestDTO dto) {
-        log.info("POST /api/clientes - Creando cliente: {}", dto.getEmail());
+        log.info("POST /api/v1/clientes - Creando cliente: {}", dto.getEmail());
         ClienteResponseDTO creado = clienteService.crearCliente(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(creado);
     }
 
     // ─────────────────────── GET ────────────────────────
 
-    @Operation(summary = "Listar todos los clientes")
+    @Operation(summary = "Listar o buscar clientes")
     @ApiResponse(responseCode = "200", description = "Lista de clientes")
     @GetMapping
-    public ResponseEntity<List<ClienteResponseDTO>> listarClientes() {
-        log.info("GET /api/clientes - Listando todos los clientes");
+    public ResponseEntity<List<ClienteResponseDTO>> listarClientes(
+            @Parameter(description = "Texto a buscar en nombre o apellido", example = "Juan")
+            @RequestParam(required = false) String texto) {
+        if (texto != null && !texto.isBlank()) {
+            log.info("GET /api/v1/clientes?texto={} - Buscando clientes", texto);
+            return ResponseEntity.ok(clienteService.buscarPorNombre(texto));
+        }
+        log.info("GET /api/v1/clientes - Listando todos los clientes");
         return ResponseEntity.ok(clienteService.listarClientes());
     }
 
@@ -76,7 +80,7 @@ public class ClienteController {
     public ResponseEntity<ClienteResponseDTO> obtenerPorId(
             @Parameter(description = "ID del cliente", example = "1")
             @PathVariable Long id) {
-        log.info("GET /api/clientes/{} - Obteniendo cliente", id);
+        log.info("GET /api/v1/clientes/{} - Obteniendo cliente", id);
         return ResponseEntity.ok(clienteService.obtenerClientePorId(id));
     }
 
@@ -85,7 +89,7 @@ public class ClienteController {
     public ResponseEntity<ClienteResponseDTO> obtenerPorEmail(
             @Parameter(description = "Email del cliente", example = "juan@email.com")
             @PathVariable String email) {
-        log.info("GET /api/clientes/email/{} - Buscando cliente", email);
+        log.info("GET /api/v1/clientes/email/{} - Buscando cliente", email);
         return ResponseEntity.ok(clienteService.obtenerClientePorEmail(email));
     }
 
@@ -94,7 +98,7 @@ public class ClienteController {
     public ResponseEntity<ClienteResponseDTO> obtenerPorRut(
             @Parameter(description = "RUT del cliente", example = "12345678-9")
             @PathVariable String rut) {
-        log.info("GET /api/clientes/rut/{} - Buscando cliente", rut);
+        log.info("GET /api/v1/clientes/rut/{} - Buscando cliente", rut);
         return ResponseEntity.ok(clienteService.obtenerClientePorRut(rut));
     }
 
@@ -103,17 +107,8 @@ public class ClienteController {
     @GetMapping("/estado/{estado}")
     public ResponseEntity<List<ClienteResponseDTO>> listarPorEstado(
             @PathVariable EstadoCliente estado) {
-        log.info("GET /api/clientes/estado/{} - Filtrando clientes", estado);
+        log.info("GET /api/v1/clientes/estado/{} - Filtrando clientes", estado);
         return ResponseEntity.ok(clienteService.listarClientesPorEstado(estado));
-    }
-
-    @Operation(summary = "Buscar clientes por nombre o apellido")
-    @GetMapping("/buscar")
-    public ResponseEntity<List<ClienteResponseDTO>> buscarPorNombre(
-            @Parameter(description = "Texto a buscar en nombre o apellido", example = "Juan")
-            @RequestParam String texto) {
-        log.info("GET /api/clientes/buscar?texto={}", texto);
-        return ResponseEntity.ok(clienteService.buscarPorNombre(texto));
     }
 
     /**
@@ -132,7 +127,7 @@ public class ClienteController {
     })
     @GetMapping("/{id}/activo")
     public ResponseEntity<Map<String, Boolean>> verificarActivo(@PathVariable Long id) {
-        log.info("GET /api/clientes/{}/activo - Verificando estado", id);
+        log.info("GET /api/v1/clientes/{}/activo - Verificando estado", id);
         boolean activo = clienteService.clienteEstaActivo(id);
         return ResponseEntity.ok(Map.of("activo", activo));
     }
@@ -149,7 +144,7 @@ public class ClienteController {
     public ResponseEntity<ClienteResponseDTO> actualizarCliente(
             @PathVariable Long id,
             @Valid @RequestBody ClienteRequestDTO dto) {
-        log.info("PUT /api/clientes/{} - Actualizando cliente", id);
+        log.info("PUT /api/v1/clientes/{} - Actualizando cliente", id);
         return ResponseEntity.ok(clienteService.actualizarCliente(id, dto));
     }
 
@@ -167,7 +162,7 @@ public class ClienteController {
             @PathVariable Long id,
             @Parameter(description = "Nuevo estado", example = "INACTIVO")
             @RequestParam EstadoCliente estado) {
-        log.info("PATCH /api/clientes/{}/estado - Cambiando a {}", id, estado);
+        log.info("PATCH /api/v1/clientes/{}/estado - Cambiando a {}", id, estado);
         return ResponseEntity.ok(clienteService.cambiarEstado(id, estado));
     }
 
@@ -180,7 +175,7 @@ public class ClienteController {
     })
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminarCliente(@PathVariable Long id) {
-        log.info("DELETE /api/clientes/{} - Eliminando cliente", id);
+        log.info("DELETE /api/v1/clientes/{} - Eliminando cliente", id);
         clienteService.eliminarCliente(id);
         return ResponseEntity.noContent().build();
     }

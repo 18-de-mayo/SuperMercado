@@ -1,7 +1,7 @@
 package com.duoc.inventarios.controller;
 
 import com.duoc.inventarios.dto.InventarioDTO;
-import com.duoc.inventarios.dto.InventariosRequest;
+import com.duoc.inventarios.dto.InventarioRequest;
 import com.duoc.inventarios.service.InventariosService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -36,7 +36,7 @@ public class InventariosController {
             @ApiResponse(responseCode = "400", description = "Datos inválidos en la petición"),
     })
     @PostMapping
-    public ResponseEntity<InventarioDTO> guardarInventario(@Valid @RequestBody InventariosRequest request) {
+    public ResponseEntity<InventarioDTO> guardarInventario(@Valid @RequestBody InventarioRequest request) {
         log.info("El request para crear un inventario fue: " + request);
         return new ResponseEntity<>(inventariosService.crearInventario(request), HttpStatus.CREATED);
     }
@@ -46,19 +46,23 @@ public class InventariosController {
     @ApiResponse(responseCode = "200", description = "Lista ls inventarios")
     @GetMapping
     public ResponseEntity<List<InventarioDTO>> obtenerInventarios() {
+        log.info("GET /api/v1/inventarios - Listando todos los inventarios");
         List<InventarioDTO> inventarios = inventariosService.obtenerInventarios();
         if (inventarios.isEmpty()) {
+            log.info("No se encontraron inventarios registrados");
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         }
+        log.info("Se encontraron {} inventarios", inventarios.size());
         return new ResponseEntity<>(inventarios, HttpStatus.OK);
     }
 
 
     @Operation(summary = "Buscar inventario por ID")
-    @ApiResponses({@ApiResponse(responseCode = "200", description = "inventario encontrado"),
-                    @ApiResponse(responseCode = "404", description = "invantario no encontrado")})
+    @ApiResponses({@ApiResponse(responseCode = "200", description = "Inventario encontrado"),
+                    @ApiResponse(responseCode = "404", description = "Inventario no encontrado")})
     @GetMapping("/{id}")
-    public ResponseEntity<InventarioDTO> buscarInventarioPorId(@PathVariable Integer id) {
+    public ResponseEntity<InventarioDTO> buscarInventarioPorId(@PathVariable Long id) {
+        log.info("GET /api/v1/inventarios/{} - Buscando inventario por ID", id);
         return new ResponseEntity<>(inventariosService.buscarInventarioPorId(id), HttpStatus.OK);
     }
 
@@ -69,17 +73,19 @@ public class InventariosController {
             @ApiResponse(responseCode = "404", description = "Inventario no encontrado")})
     @PutMapping("/{id}")
     public ResponseEntity<InventarioDTO> actualizarInventario(
-            @PathVariable Integer id,
-            @Valid @RequestBody InventariosRequest request) {
+            @PathVariable Long id,
+            @Valid @RequestBody InventarioRequest request) {
+        log.info("PUT /api/v1/inventarios/{} - Actualizando inventario", id);
         return new ResponseEntity<>(inventariosService.actualizarInventario(id, request), HttpStatus.OK);
     }
 
     // DELETE /api/v1/inventarios/{id} — elimina un inventario
     @Operation(summary = "Eliminar inventario existente")
-    @ApiResponses({@ApiResponse(responseCode = "200", description = "Inventario elimando"),
+    @ApiResponses({@ApiResponse(responseCode = "204", description = "Inventario eliminado"),
                     @ApiResponse(responseCode = "404", description = "Inventario no encontrado")})
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> eliminarInventario(@PathVariable Integer id) {
+    public ResponseEntity<Void> eliminarInventario(@PathVariable Long id) {
+        log.info("DELETE /api/v1/inventarios/{} - Eliminando inventario", id);
         inventariosService.eliminarInventario(id);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }

@@ -39,6 +39,7 @@ public class DespachoController {
     })
     @PostMapping
     public ResponseEntity<DespachoDTO> guardar(@Valid @RequestBody DespachoRequest request) {
+        log.info("POST /api/v1/despachos - Creando despacho para pedido ID: {}", request.getPedidoId());
         return ResponseEntity.status(HttpStatus.CREATED).body(service.guardar(request));
     }
 
@@ -50,12 +51,13 @@ public class DespachoController {
     })
     @GetMapping
     public ResponseEntity<List<DespachoDTO>> listar() {
-        log.info("cliente solicita listar");
+        log.info("GET /api/v1/despachos - Listando todos los despachos");
         List<DespachoDTO> lista = service.listar();
         if (lista.isEmpty()) {
-                log.warn("comentario");
+            log.info("No se encontraron despachos registrados");
             return ResponseEntity.noContent().build();
         }
+        log.info("Se encontraron {} despachos", lista.size());
         return ResponseEntity.ok(lista);
     }
 
@@ -70,23 +72,56 @@ public class DespachoController {
     public ResponseEntity<DespachoDTO> buscarPorId(
             @Parameter(description = "ID único del despacho a consultar", example = "1")
             @PathVariable Long id) {
+        log.info("GET /api/v1/despachos/{} - Buscando despacho por ID", id);
         return ResponseEntity.ok(service.buscarPorId(id));
     }
 
-    // ── PATCH: ACTUALIZAR ESTADO (Flujo crítico de negocio) ──────────
-    @Operation(summary = "Actualizar estado del despacho", description = "Modifica el estado actual del envío siguiendo la máquina de estados obligatoria: PENDIENTE -> EN_RUTA -> ENTREGADO.")
+    // ── PATCH: CAMBIAR ESTADO ──────────────────────────────────────────
+
+    @Operation(summary = "Actualizar estado del despacho")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Estado actualizado con éxito",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = DespachoDTO.class))),
-            @ApiResponse(responseCode = "404", description = "Despacho no encontrado", content = @Content),
-            @ApiResponse(responseCode = "422", description = "Transición de estado inválida o ilegal según reglas de negocio", content = @Content)
+            @ApiResponse(responseCode = "200", description = "Estado actualizado"),
+            @ApiResponse(responseCode = "404", description = "Despacho no encontrado"),
+            @ApiResponse(responseCode = "422", description = "Transición de estado inválida")
     })
     @PatchMapping("/{id}/estado")
     public ResponseEntity<DespachoDTO> actualizarEstado(
-            @Parameter(description = "ID del despacho a modificar", example = "1")
             @PathVariable Long id,
-            @Parameter(description = "Nuevo estado (EN_RUTA o ENTREGADO)", example = "EN_RUTA")
-            @RequestParam EstadoDespacho nuevoEstado) {
-        return ResponseEntity.ok(service.actualizarEstado(id, nuevoEstado));
+            @RequestParam EstadoDespacho estado) {
+        log.info("PATCH /api/v1/despachos/{}/estado - Nuevo estado: {}", id, estado);
+        return ResponseEntity.ok(service.actualizarEstado(id, estado));
     }
+
+    // ── PUT: ACTUALIZAR DESPACHO COMPLETO ────────────────────────────
+    @Operation(summary = "Actualizar despacho", description = "Actualiza los datos completos de un despacho existente")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Despacho actualizado con éxito",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = DespachoDTO.class))),
+            @ApiResponse(responseCode = "404", description = "Despacho no encontrado", content = @Content),
+            @ApiResponse(responseCode = "400", description = "Datos inválidos", content = @Content)
+    })
+    @PutMapping("/{id}")
+    public ResponseEntity<DespachoDTO> actualizar(
+            @Parameter(description = "ID del despacho a actualizar", example = "1")
+            @PathVariable Long id,
+            @Valid @RequestBody DespachoRequest request) {
+        log.info("PUT /api/v1/despachos/{} - Actualizando despacho", id);
+        return ResponseEntity.ok(service.actualizar(id, request));
+    }
+
+    // ── DELETE: ELIMINAR DESPACHO ────────────────────────────────────
+    @Operation(summary = "Eliminar despacho", description = "Elimina un despacho del sistema")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Despacho eliminado con éxito"),
+            @ApiResponse(responseCode = "404", description = "Despacho no encontrado", content = @Content)
+    })
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> eliminar(
+            @Parameter(description = "ID del despacho a eliminar", example = "1")
+            @PathVariable Long id) {
+        log.info("DELETE /api/v1/despachos/{} - Eliminando despacho", id);
+        service.eliminar(id);
+        return ResponseEntity.noContent().build();
+    }
+
 }

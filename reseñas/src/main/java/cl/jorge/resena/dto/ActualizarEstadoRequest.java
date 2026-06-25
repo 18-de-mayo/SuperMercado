@@ -13,6 +13,7 @@ import lombok.Data;
 @Schema(description = "Solicitud para actualizar el estado de una reseña")
 public class ActualizarEstadoRequest {
 
+    @Schema(description = "Nuevo estado de la reseña", example = "APROBADA")
     @NotNull(message = "El nuevo estado es obligatorio")
     private EstadoResena nuevoEstado;
 }

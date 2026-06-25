@@ -7,5 +7,5 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface InventariosRepository extends JpaRepository<Inventarios, Integer> {
+public interface InventariosRepository extends JpaRepository<Inventarios, Long> {
 }
